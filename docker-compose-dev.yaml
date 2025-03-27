@@ -1,9 +1,11 @@
-version: '3.9'
 services:
   backend:
-    image: backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
     environment:
-      - RUN_MODE=DEV
+      - APP_ENV=DEV
       - PORT=8080
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/
       - GCP_CREDENTIALS=${GCP_CREDENTIALS}
@@ -21,7 +23,6 @@ services:
       - ./app:/code/app
       - ./tests:/code/tests
       - ./assets:/code/assets
-      - ./requirements-dev.txt:/code/requirements-dev.txt
     ports:
       - "8080:8080"
     command: uvicorn app.main:app --host=0.0.0.0 --port=8080 --reload

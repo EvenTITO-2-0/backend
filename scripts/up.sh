@@ -1,5 +1,4 @@
 #!/bin/bash
-docker build -f ./Dockerfile -t backend:latest .
 NETWORK_NAME="eventito-dev-network"
 
 if ! docker network ls --format '{{.Name}}' | grep -wq "$NETWORK_NAME"; then
