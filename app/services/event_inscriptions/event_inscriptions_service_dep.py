@@ -15,14 +15,14 @@ from app.services.storage.event_inscription_storage_service_dep import EventInsc
 
 class EventInscriptionsServiceChecker:
     async def __call__(
-            self,
-            event_id: UUID,
-            caller_id: CallerIdDep,
-            event_notification_service: EventsNotificationServiceDep,
-            event_configuration_service: EventsConfigurationServiceDep,
-            event_payment_service: EventPaymentsServiceDep,
-            storage_service: EventInscriptionStorageServiceDep,
-            inscriptions_repository: Annotated[InscriptionsRepository, Depends(get_repository(InscriptionsRepository))],
+        self,
+        event_id: UUID,
+        caller_id: CallerIdDep,
+        event_notification_service: EventsNotificationServiceDep,
+        event_configuration_service: EventsConfigurationServiceDep,
+        event_payment_service: EventPaymentsServiceDep,
+        storage_service: EventInscriptionStorageServiceDep,
+        inscriptions_repository: Annotated[InscriptionsRepository, Depends(get_repository(InscriptionsRepository))],
     ) -> EventInscriptionsService:
         return EventInscriptionsService(
             event_configuration_service,
@@ -31,7 +31,7 @@ class EventInscriptionsServiceChecker:
             inscriptions_repository,
             event_notification_service,
             event_id,
-            caller_id
+            caller_id,
         )
 
 

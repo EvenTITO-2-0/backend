@@ -12,18 +12,13 @@ from app.services.event_members.event_members_service import EventMembersService
 
 class EventsMemberChecker:
     async def __call__(
-            self,
-            event_id: UUID,
-            users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
-            organizers_repository: Annotated[OrganizerRepository, Depends(get_repository(OrganizerRepository))],
-            chair_repository: Annotated[ChairRepository, Depends(get_repository(ChairRepository))],
+        self,
+        event_id: UUID,
+        users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
+        organizers_repository: Annotated[OrganizerRepository, Depends(get_repository(OrganizerRepository))],
+        chair_repository: Annotated[ChairRepository, Depends(get_repository(ChairRepository))],
     ) -> EventMembersService:
-        return EventMembersService(
-            event_id,
-            organizers_repository,
-            chair_repository,
-            users_repository
-        )
+        return EventMembersService(event_id, organizers_repository, chair_repository, users_repository)
 
 
 event_members_checker = EventsMemberChecker()
