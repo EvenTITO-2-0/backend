@@ -1,5 +1,6 @@
 from uuid import UUID
-from sqlalchemy import select, and_
+
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models.user import UserModel
@@ -13,10 +14,7 @@ class MemberRepository(Repository):
 
     async def get_all(self, event_id: UUID):
         query = select(UserModel, self.model).where(
-            and_(
-                self.model.event_id == event_id,
-                self.model.user_id == UserModel.id
-            )
+            and_(self.model.event_id == event_id, self.model.user_id == UserModel.id)
         )
         result = await self.session.execute(query)
         return result.fetchall()
@@ -27,11 +25,7 @@ class MemberRepository(Repository):
 
     async def get_member(self, event_id: UUID, user_id: UID):
         query = select(UserModel, self.model).where(
-            and_(
-                self.model.event_id == event_id,
-                self.model.user_id == UserModel.id,
-                UserModel.id == user_id
-            )
+            and_(self.model.event_id == event_id, self.model.user_id == UserModel.id, UserModel.id == user_id)
         )
         result = await self.session.execute(query)
         return result.fetchone()
@@ -40,8 +34,5 @@ class MemberRepository(Repository):
         return await self.remove((event_id, user_id))
 
     async def create_member(self, event_id: UUID, user_id: UID):
-        db_in = self.model(
-            user_id=user_id,
-            event_id=event_id
-        )
+        db_in = self.model(user_id=user_id, event_id=event_id)
         await self._create(db_in)

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import update, and_
+from sqlalchemy import and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models.review import ReviewModel
@@ -9,7 +9,7 @@ from app.database.models.work import WorkModel
 from app.repository.crud_repository import Repository
 from app.schemas.users.user import PublicUserSchema
 from app.schemas.users.utils import UID
-from app.schemas.works.review import ReviewResponseSchema, ReviewCreateRequestSchema, ReviewPublishSchema
+from app.schemas.works.review import ReviewCreateRequestSchema, ReviewPublishSchema, ReviewResponseSchema
 
 
 class ReviewsRepository(Repository):
@@ -17,19 +17,19 @@ class ReviewsRepository(Repository):
         super().__init__(session, ReviewModel)
 
     async def get_all_work_reviews_for_event(
-            self, event_id: UUID, work_id: UUID, offset: int, limit: int) -> list[ReviewResponseSchema]:
+        self, event_id: UUID, work_id: UUID, offset: int, limit: int
+    ) -> list[ReviewResponseSchema]:
         return await self._get_work_reviews(
-            [ReviewModel.event_id == event_id, ReviewModel.work_id == work_id],
-            offset,
-            limit
+            [ReviewModel.event_id == event_id, ReviewModel.work_id == work_id], offset, limit
         )
 
     async def get_shared_work_reviews(
-            self, event_id: UUID, work_id: UUID, offset: int, limit: int) -> list[ReviewResponseSchema]:
+        self, event_id: UUID, work_id: UUID, offset: int, limit: int
+    ) -> list[ReviewResponseSchema]:
         return await self._get_work_reviews(
             [ReviewModel.event_id == event_id, ReviewModel.work_id == work_id, ReviewModel.shared.is_(True)],
             offset,
-            limit
+            limit,
         )
 
     async def exists_review(self, event_id: UUID, work_id: UUID, reviewer_id: UID, submission_id: UUID) -> bool:
@@ -37,26 +37,26 @@ class ReviewsRepository(Repository):
             ReviewModel.event_id == event_id,
             ReviewModel.work_id == work_id,
             ReviewModel.submission_id == submission_id,
-            ReviewModel.reviewer_id == reviewer_id
+            ReviewModel.reviewer_id == reviewer_id,
         ]
         return await self._exists_with_conditions(conditions)
 
     async def create_review(
-            self,
-            event_id: UUID,
-            work_id: UUID,
-            reviewer_id: UID,
-            submission_id: UUID,
-            review_schema: ReviewCreateRequestSchema
+        self,
+        event_id: UUID,
+        work_id: UUID,
+        reviewer_id: UID,
+        submission_id: UUID,
+        review_schema: ReviewCreateRequestSchema,
     ) -> ReviewResponseSchema:
         new_review = ReviewModel(
             **review_schema.model_dump(),
             event_id=event_id,
             work_id=work_id,
             reviewer_id=reviewer_id,
-            submission_id=submission_id
+            submission_id=submission_id,
         )
-        saved_review = (await self._create(new_review))
+        saved_review = await self._create(new_review)
         return ReviewResponseSchema(
             id=saved_review.id,
             event_id=saved_review.event_id,
@@ -70,8 +70,8 @@ class ReviewsRepository(Repository):
             reviewer=PublicUserSchema(
                 email=saved_review.reviewer.email,
                 name=saved_review.reviewer.name,
-                lastname=saved_review.reviewer.lastname
-            )
+                lastname=saved_review.reviewer.lastname,
+            ),
         )
 
     async def update_review(self, review_id: UUID, review_update: ReviewCreateRequestSchema) -> bool:
@@ -91,20 +91,12 @@ class ReviewsRepository(Repository):
             update_work_query.values(deadline_date=reviews_to_publish.resend_deadline)
 
         for review_id in reviews_ids:
-            conditions = [
-                ReviewModel.event_id == event_id,
-                ReviewModel.work_id == work_id,
-                ReviewModel.id == review_id
-            ]
+            conditions = [ReviewModel.event_id == event_id, ReviewModel.work_id == work_id, ReviewModel.id == review_id]
             review = await self._get_with_conditions(conditions)
             if not review:
                 return False
 
-            update_review_query = (
-                update(ReviewModel)
-                .where(ReviewModel.id == review.id)
-                .values(shared=True)
-            )
+            update_review_query = update(ReviewModel).where(ReviewModel.id == review.id).values(shared=True)
             update_submission_query = (
                 update(SubmissionModel)
                 .where(SubmissionModel.id == review.submission_id)
@@ -116,12 +108,7 @@ class ReviewsRepository(Repository):
         await self.session.commit()
         return True
 
-    async def _get_work_reviews(
-            self,
-            conditions,
-            offset: int,
-            limit: int
-    ) -> list[ReviewResponseSchema]:
+    async def _get_work_reviews(self, conditions, offset: int, limit: int) -> list[ReviewResponseSchema]:
         res = await self._get_many_with_conditions(conditions, offset, limit)
         return [
             ReviewResponseSchema(
@@ -136,9 +123,8 @@ class ReviewsRepository(Repository):
                 creation_date=row.creation_date,
                 last_update=row.last_update,
                 reviewer=PublicUserSchema(
-                    email=row.reviewer.email,
-                    name=row.reviewer.name,
-                    lastname=row.reviewer.lastname
+                    email=row.reviewer.email, name=row.reviewer.name, lastname=row.reviewer.lastname
                 ),
-            ) for row in res
+            )
+            for row in res
         ]

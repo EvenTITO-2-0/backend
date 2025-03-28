@@ -1,11 +1,10 @@
 from uuid import UUID
 
-from app.schemas.storage.schemas import UploadURLSchema, DownloadURLSchema
+from app.schemas.storage.schemas import DownloadURLSchema, UploadURLSchema
 from app.services.storage.storage_service import StorageService
 
 
 class WorkStorageService(StorageService):
-
     def __init__(self, event_id: UUID, work_id: UUID):
         super().__init__()
         self.event_id = event_id

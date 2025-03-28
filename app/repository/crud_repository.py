@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from sqlalchemy import and_, exists, func
-from sqlalchemy import update
+from sqlalchemy import and_, exists, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -46,7 +45,7 @@ class Repository:
         return await self._update_with_conditions(conditions, object_update)
 
     async def _update_with_conditions(self, conditions, object_update: BaseModel) -> bool:
-        query = update(self.model).where(and_(*conditions)).values(object_update.model_dump(mode='json'))
+        query = update(self.model).where(and_(*conditions)).values(object_update.model_dump(mode="json"))
         result = await self.session.execute(query)
         await self.session.commit()
         if result.rowcount < 1:
@@ -74,7 +73,7 @@ class Repository:
         return result.scalar_one()
 
     async def create(self, object_create: BaseModel):
-        db_in = self.model(**object_create.model_dump(mode='json'))
+        db_in = self.model(**object_create.model_dump(mode="json"))
         return await self._create(db_in)
 
     async def _create(self, db_in):

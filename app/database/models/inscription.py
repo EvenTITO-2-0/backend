@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sqlalchemy import Column, String, ForeignKey, ARRAY, Index, UUID
+from sqlalchemy import ARRAY, UUID, Column, ForeignKey, Index, String
 from sqlalchemy.orm import relationship
 
 from app.database.models.base import Base
@@ -28,9 +28,9 @@ class InscriptionModel(ModelTemplate, Base):
     affiliation = Column(String, default=None, nullable=True)
 
     # Always fetch the usermodel, when fetching a review
-    user = relationship("UserModel", back_populates='inscriptions', lazy=False)
+    user = relationship("UserModel", back_populates="inscriptions", lazy=False)
 
     __table_args__ = (
-        Index('ix_inscription_user_id', 'user_id'),
-        Index('ix_inscription_event_id', 'event_id'),
+        Index("ix_inscription_user_id", "user_id"),
+        Index("ix_inscription_event_id", "event_id"),
     )

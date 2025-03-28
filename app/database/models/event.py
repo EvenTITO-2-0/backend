@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sqlalchemy import Column, String, ForeignKey, JSON, ARRAY
+from sqlalchemy import ARRAY, JSON, Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from app.database.models.base import Base
@@ -44,4 +44,4 @@ class EventModel(ModelTemplate, Base):
     mdata = Column(JSON, default=None)
 
     organizers = relationship("OrganizerModel", back_populates="event")
-    creator = relationship("UserModel", back_populates='events', lazy=False)
+    creator = relationship("UserModel", back_populates="events", lazy=False)

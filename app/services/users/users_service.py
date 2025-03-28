@@ -1,10 +1,10 @@
 from app.database.models.user import UserRole
-from app.repository.users_repository import UsersRepository
-from app.schemas.users.user import UserModifySchema, UserReply, UserSchema
 from app.exceptions.users_exceptions import (
     EmailAlreadyExists,
     IdAlreadyExists,
 )
+from app.repository.users_repository import UsersRepository
+from app.schemas.users.user import UserModifySchema, UserReply, UserSchema
 from app.schemas.users.utils import UID
 from app.services.services import BaseService
 
@@ -25,11 +25,7 @@ class UsersService(BaseService):
         if user_id_in_db:
             raise EmailAlreadyExists(user.email)
 
-        user_to_create = UserReply(
-            **user.model_dump(),
-            id=self.user_id,
-            role=UserRole.DEFAULT
-        )
+        user_to_create = UserReply(**user.model_dump(), id=self.user_id, role=UserRole.DEFAULT)
 
         user_created = await self.users_repository.create(user_to_create)
         return user_created.id

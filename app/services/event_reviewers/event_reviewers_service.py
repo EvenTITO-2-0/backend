@@ -1,14 +1,18 @@
 from uuid import UUID
 
-from app.exceptions.members.reviewer.reviewer_exceptions import AlreadyReviewerExist
-from app.exceptions.members.reviewer.reviewer_exceptions import UserNotIsReviewer
+from app.exceptions.members.reviewer.reviewer_exceptions import AlreadyReviewerExist, UserNotIsReviewer
 from app.exceptions.users_exceptions import UserNotFound
 from app.exceptions.works.works_exceptions import WorkNotFound
 from app.repository.reviewers_repository import ReviewerRepository
 from app.repository.users_repository import UsersRepository
-from app.schemas.members.reviewer_schema import ReviewerResponseSchema, ReviewerWithWorksDeadlineResponseSchema, \
-    ReviewerAssignmentWithWorkSchema, ReviewerUpdateRequestSchema
-from app.schemas.members.reviewer_schema import ReviewerWithWorksResponseSchema, ReviewerCreateRequestSchema
+from app.schemas.members.reviewer_schema import (
+    ReviewerAssignmentWithWorkSchema,
+    ReviewerCreateRequestSchema,
+    ReviewerResponseSchema,
+    ReviewerUpdateRequestSchema,
+    ReviewerWithWorksDeadlineResponseSchema,
+    ReviewerWithWorksResponseSchema,
+)
 from app.schemas.users.utils import UID
 from app.services.events.events_service import EventsService
 from app.services.notifications.events_notifications_service import EventsNotificationsService
@@ -18,13 +22,13 @@ from app.services.works.works_service import WorksService
 
 class EventReviewerService(BaseService):
     def __init__(
-            self,
-            event_id: UUID,
-            event_service: EventsService,
-            work_service: WorksService,
-            reviewer_repository: ReviewerRepository,
-            users_repository: UsersRepository,
-            event_notification_service: EventsNotificationsService,
+        self,
+        event_id: UUID,
+        event_service: EventsService,
+        work_service: WorksService,
+        reviewer_repository: ReviewerRepository,
+        users_repository: UsersRepository,
+        event_notification_service: EventsNotificationsService,
     ):
         self.event_id = event_id
         self.event_service = event_service

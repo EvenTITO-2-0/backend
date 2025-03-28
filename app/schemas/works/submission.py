@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from app.database.models.work import WorkStates
-from app.schemas.storage.schemas import UploadURLSchema, DownloadURLSchema
+from app.schemas.storage.schemas import DownloadURLSchema, UploadURLSchema
 
 
 class SubmissionDatesResponseSchema(BaseModel):

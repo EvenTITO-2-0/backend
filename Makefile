@@ -35,10 +35,11 @@ restart:
 shell:
 	$(DOCKER_COMPOSE_DEV) exec backend bash
 
-# Format code with black and ruff
+# Format code with ruff
 .PHONY: format
 format:
-	./scripts/format.sh
+	ruff check --fix .
+	ruff format .
 
 # Run type checking with mypy
 .PHONY: typecheck
@@ -66,7 +67,7 @@ help:
 	@echo "  logs            - View logs of all containers"
 	@echo "  restart         - Restart all containers"
 	@echo "  shell           - Enter backend container shell"
-	@echo "  format          - Format code with black and ruff"
+	@echo "  format          - Format code with ruff"
 	@echo "  typecheck       - Run type checking with mypy"
 	@echo "  check           - Run all checks (format, type check, test)"
 	@echo "  install         - Install local dependencies"

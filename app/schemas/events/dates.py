@@ -4,34 +4,22 @@ from typing import Self
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
-    model_validator, ConfigDict,
+    model_validator,
 )
 
 
 class MandatoryDates(str, Enum):
-    START_DATE = 'START_DATE'
-    END_DATE = 'END_DATE'
-    SUBMISSION_DEADLINE_DATE = 'SUBMISSION_DEADLINE_DATE'
+    START_DATE = "START_DATE"
+    END_DATE = "END_DATE"
+    SUBMISSION_DEADLINE_DATE = "SUBMISSION_DEADLINE_DATE"
 
 
 class DateSchema(BaseModel):
-    name: str | None = Field(
-        min_length=2,
-        max_length=100,
-        examples=[MandatoryDates.START_DATE],
-        default=None
-    )
-    label: str = Field(
-        min_length=2,
-        max_length=100,
-        examples=["Presentacion trabajos"]
-    )
-    description: str = Field(
-        min_length=2,
-        max_length=100,
-        examples=["Inicio fecha"]
-    )
+    name: str | None = Field(min_length=2, max_length=100, examples=[MandatoryDates.START_DATE], default=None)
+    label: str = Field(min_length=2, max_length=100, examples=["Presentacion trabajos"])
+    description: str = Field(min_length=2, max_length=100, examples=["Inicio fecha"])
     is_mandatory: bool
     date: datetime.date | None = Field(examples=["2023-07-12"], default=None)
     time: datetime.time | None = Field(examples=["15:30"], default=None)
@@ -43,32 +31,32 @@ class DatesCompleteSchema(BaseModel):
         default=[
             DateSchema(
                 name=MandatoryDates.START_DATE,
-                label='Fecha de Comienzo',
-                description='Fecha de comienzo del evento.',
+                label="Fecha de Comienzo",
+                description="Fecha de comienzo del evento.",
                 is_mandatory=True,
                 date="2024-10-01",
-                time="09:00:00"
+                time="09:00:00",
             ),
             DateSchema(
                 name=MandatoryDates.END_DATE,
-                label='Fecha de Finalización',
-                description='Fecha de comienzo del evento.',
+                label="Fecha de Finalización",
+                description="Fecha de comienzo del evento.",
                 is_mandatory=True,
                 date="2024-10-01",
-                time="09:00:00"
+                time="09:00:00",
             ),
             DateSchema(
                 name=MandatoryDates.SUBMISSION_DEADLINE_DATE,
-                label='Fecha de envío de trabajos',
-                description='Fecha límite de envío de trabajos.',
+                label="Fecha de envío de trabajos",
+                description="Fecha límite de envío de trabajos.",
                 is_mandatory=True,
                 date="2024-10-01",
-                time="09:00:00"
-            )
+                time="09:00:00",
+            ),
         ]
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_mandatory_dates(self) -> Self:
         mandatory_dates = [date for date in self.dates if date.is_mandatory]
         if len(mandatory_dates) != len(MandatoryDates):
@@ -87,5 +75,5 @@ class DatesCompleteSchema(BaseModel):
         end_time = mandatory_dates_dict[MandatoryDates.END_DATE].time
         if start_date is not None and end_date is not None:
             if (start_date > end_date) or (start_date == end_date and start_time > end_time):
-                raise ValueError('End Date should be after Start Date.')
+                raise ValueError("End Date should be after Start Date.")
         return self

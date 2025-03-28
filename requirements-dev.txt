@@ -5,7 +5,6 @@ freezegun
 pytest-mock==3.14.0
 
 # Formatting
-black==24.2.0
 isort==5.13.2
 
 # Type checking

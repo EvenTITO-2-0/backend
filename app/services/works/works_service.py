@@ -3,14 +3,26 @@ from uuid import UUID
 
 from app.database.models.inscription import InscriptionRole
 from app.database.models.work import WorkModel, WorkStates
-from app.exceptions.works.works_exceptions import TitleAlreadyExists, StatusNotAllowWorkUpdate, \
-    CannotUpdateWorkAfterDeadlineDate, WorkNotFound, NotIsMyWork, CannotCreateWorkAfterDeadlineDate, \
-    TrackNotExistInEvent, CannotCreateWorkIfNotSpeakerInscription
+from app.exceptions.works.works_exceptions import (
+    CannotCreateWorkAfterDeadlineDate,
+    CannotCreateWorkIfNotSpeakerInscription,
+    CannotUpdateWorkAfterDeadlineDate,
+    NotIsMyWork,
+    StatusNotAllowWorkUpdate,
+    TitleAlreadyExists,
+    TrackNotExistInEvent,
+    WorkNotFound,
+)
 from app.repository.works_repository import WorksRepository
 from app.schemas.events.dates import MandatoryDates
 from app.schemas.users.utils import UID
-from app.schemas.works.work import WorkWithState, CreateWorkSchema, WorkStateSchema, \
-    WorkUpdateSchema, WorkUpdateAdministrationSchema
+from app.schemas.works.work import (
+    CreateWorkSchema,
+    WorkStateSchema,
+    WorkUpdateAdministrationSchema,
+    WorkUpdateSchema,
+    WorkWithState,
+)
 from app.services.event_inscriptions.event_inscriptions_service import EventInscriptionsService
 from app.services.events.events_configuration_service import EventsConfigurationService
 from app.services.notifications.events_notifications_service import EventsNotificationsService
@@ -20,13 +32,13 @@ from app.utils.utils import is_valid_date_and_time
 
 class WorksService(BaseService):
     def __init__(
-            self,
-            user_id: UID,
-            event_id: UUID,
-            event_configuration_service: EventsConfigurationService,
-            event_notification_service: EventsNotificationsService,
-            inscription_service: EventInscriptionsService,
-            works_repository: WorksRepository
+        self,
+        user_id: UID,
+        event_id: UUID,
+        event_configuration_service: EventsConfigurationService,
+        event_notification_service: EventsNotificationsService,
+        inscription_service: EventInscriptionsService,
+        works_repository: WorksRepository,
     ):
         self.user_id = user_id
         self.event_id = event_id
@@ -65,10 +77,7 @@ class WorksService(BaseService):
             raise CannotCreateWorkIfNotSpeakerInscription(self.event_id)
 
         work = await self.works_repository.create_work(
-            work,
-            self.event_id,
-            datetime.combine(submission_deadline.date, submission_deadline.time),
-            self.user_id
+            work, self.event_id, datetime.combine(submission_deadline.date, submission_deadline.time), self.user_id
         )
         return work.id
 
@@ -93,8 +102,8 @@ class WorksService(BaseService):
         await self.works_repository.update_work_status(self.event_id, work_id, status)
         work = await self.works_repository.get_work(self.event_id, work_id)
         await self.event_notification_service.notify_change_work_status(
-            self.event_id,
-            {"work": work, "status": status.state})
+            self.event_id, {"work": work, "status": status.state}
+        )
 
     async def validate_update_work(self, work_id: UUID, work_update: WorkUpdateSchema | None = None) -> None:
         my_work = await self.__get_my_work(work_id)
@@ -102,8 +111,11 @@ class WorksService(BaseService):
             raise StatusNotAllowWorkUpdate(work_status=my_work.state, work_id=work_id)
         if datetime.today() > my_work.deadline_date:
             raise CannotUpdateWorkAfterDeadlineDate(deadline_date=my_work.deadline_date, work_id=work_id)
-        if work_update is not None and my_work.title != work_update.title and \
-                await self.works_repository.work_with_title_exists(self.event_id, work_update.title):
+        if (
+            work_update is not None
+            and my_work.title != work_update.title
+            and await self.works_repository.work_with_title_exists(self.event_id, work_update.title)
+        ):
             raise TitleAlreadyExists(work_update.title, self.event_id)
 
     async def __get_my_work(self, work_id: UUID) -> WorkModel:

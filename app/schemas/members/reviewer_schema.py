@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field, BaseModel, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr
 
 from app.schemas.members.member_schema import MemberResponseSchema
 from app.schemas.users.utils import UID
@@ -10,9 +10,7 @@ from app.schemas.works.work import WorkWithState
 
 class ReviewerWithWorksResponseSchema(MemberResponseSchema):
     work_ids: list[UUID] = Field(
-        max_length=100,
-        examples=[["work_id_01", "work_id_02", "work_id_03"]],
-        default_factory=list
+        max_length=100, examples=[["work_id_01", "work_id_02", "work_id_03"]], default_factory=list
     )
 
 

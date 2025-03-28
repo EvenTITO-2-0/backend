@@ -51,7 +51,6 @@ This project includes VSCode configurations for an optimal development experienc
 Install the following VSCode extensions:
 - Python (`ms-python.python`)
 - Pylance (`ms-python.vscode-pylance`)
-- Black Formatter (`ms-python.black-formatter`)
 - Docker (`ms-azuretools.vscode-docker`)
 - GitLens (`eamodio.gitlens`)
 - Python Docstring Generator (`njpwerner.autodocstring`)
@@ -61,8 +60,7 @@ The `.vscode/extensions.json` file will prompt you to install these when you ope
 
 ### Key Features
 1. **Code Formatting**
-   - Black for code formatting (120 characters line length)
-   - Ruff for linting and import sorting
+   - Ruff for code formatting and linting (120 characters line length)
    - Format on save enabled
 
 2. **Debugging**
@@ -130,3 +128,10 @@ Available snippets (trigger them by typing):
    ```bash
    make check
    ```
+
+## Code Style
+
+This project uses:
+- Ruff for linting and formatting
+- MyPy for type checking
+- The code follows standard Python style conventions through Ruff

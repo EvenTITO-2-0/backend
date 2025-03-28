@@ -10,52 +10,44 @@ from app.authorization.organizer_dep import IsOrganizerDep, verify_is_organizer
 from app.authorization.reviewer_dep import IsWorkReviewerDep
 from app.authorization.user_id_dep import verify_user_exists
 from app.authorization.util_dep import or_
-from app.schemas.works.work import CreateWorkSchema, WorkWithState, \
-    WorkStateSchema, WorkUpdateSchema, WorkUpdateAdministrationSchema
+from app.schemas.works.work import (
+    CreateWorkSchema,
+    WorkStateSchema,
+    WorkUpdateAdministrationSchema,
+    WorkUpdateSchema,
+    WorkWithState,
+)
 from app.services.works.works_service_dep import WorksServiceDep
 
 works_router = APIRouter(prefix="/{event_id}/works", tags=["Events: Works"])
 
 
 @works_router.get(
-    path="",
-    status_code=200,
-    response_model=List[WorkWithState],
-    dependencies=[or_(IsOrganizerDep, IsTrackChairDep)]
+    path="", status_code=200, response_model=List[WorkWithState], dependencies=[or_(IsOrganizerDep, IsTrackChairDep)]
 )
 async def get_works(
-        work_service: WorksServiceDep,
-        offset: int = 0,
-        limit: int = Query(default=100, le=100),
-        track: str = Query(default=None)
+    work_service: WorksServiceDep,
+    offset: int = 0,
+    limit: int = Query(default=100, le=100),
+    track: str = Query(default=None),
 ) -> list[WorkWithState]:
     return await work_service.get_works(track, offset, limit)
 
 
 @works_router.get(
-    path="/talks",
-    status_code=200,
-    response_model=List[WorkWithState],
-    dependencies=[Depends(verify_user_exists)]
+    path="/talks", status_code=200, response_model=List[WorkWithState], dependencies=[Depends(verify_user_exists)]
 )
 async def get_works_with_talk_not_null(
-        work_service: WorksServiceDep,
-        offset: int = 0,
-        limit: int = Query(default=100, le=100)
+    work_service: WorksServiceDep, offset: int = 0, limit: int = Query(default=100, le=100)
 ) -> list[WorkWithState]:
     return await work_service.get_works_with_talk_not_null(offset, limit)
 
 
 @works_router.get(
-    path="/my-works",
-    status_code=200,
-    response_model=List[WorkWithState],
-    dependencies=[Depends(verify_user_exists)]
+    path="/my-works", status_code=200, response_model=List[WorkWithState], dependencies=[Depends(verify_user_exists)]
 )
 async def read_my_works(
-        work_service: WorksServiceDep,
-        offset: int = 0,
-        limit: int = Query(default=100, le=100)
+    work_service: WorksServiceDep, offset: int = 0, limit: int = Query(default=100, le=100)
 ) -> list[WorkWithState]:
     return await work_service.get_my_works(offset, limit)
 
@@ -64,7 +56,7 @@ async def read_my_works(
     path="/{work_id}",
     status_code=200,
     response_model=WorkWithState,
-    dependencies=[or_(IsOrganizerDep, IsAuthorDep, IsWorkChairDep, IsWorkReviewerDep)]
+    dependencies=[or_(IsOrganizerDep, IsAuthorDep, IsWorkChairDep, IsWorkReviewerDep)],
 )
 async def get_work(work_id: UUID, work_service: WorksServiceDep) -> WorkWithState:
     return await work_service.get_work(work_id)
@@ -80,23 +72,13 @@ async def update_work(work_id: UUID, work_update: WorkUpdateSchema, work_service
     await work_service.update_work(work_id, work_update)
 
 
-@works_router.put(
-    path="/{work_id}/administration",
-    status_code=204,
-    dependencies=[Depends(verify_is_organizer)]
-)
+@works_router.put(path="/{work_id}/administration", status_code=204, dependencies=[Depends(verify_is_organizer)])
 async def update_work_administration(
-        work_id: UUID,
-        work_update: WorkUpdateAdministrationSchema,
-        work_service: WorksServiceDep
+    work_id: UUID, work_update: WorkUpdateAdministrationSchema, work_service: WorksServiceDep
 ) -> None:
     await work_service.update_work_administration(work_id, work_update)
 
 
-@works_router.patch(
-    path="/{work_id}/status",
-    status_code=204,
-    dependencies=[or_(IsAdminUsrDep, IsOrganizerDep)]
-)
+@works_router.patch(path="/{work_id}/status", status_code=204, dependencies=[or_(IsAdminUsrDep, IsOrganizerDep)])
 async def update_work_status(work_id: UUID, status: WorkStateSchema, work_service: WorksServiceDep) -> None:
     await work_service.update_work_status(work_id, status)

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sqlalchemy import Column, Index, ForeignKey, UUID, String, ARRAY
+from sqlalchemy import ARRAY, UUID, Column, ForeignKey, Index, String
 
 from app.database.models.base import Base
 from app.database.models.utils import ModelTemplate
@@ -23,6 +23,6 @@ class PaymentModel(ModelTemplate, Base):
     works = Column(ARRAY(UUID(as_uuid=True)), nullable=True)
 
     __table_args__ = (
-        Index('ix_payment_event_id', 'event_id'),
-        Index('ix_payment_inscription_id', 'inscription_id'),
+        Index("ix_payment_event_id", "event_id"),
+        Index("ix_payment_inscription_id", "inscription_id"),
     )

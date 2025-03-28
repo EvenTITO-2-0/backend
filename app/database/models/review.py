@@ -1,13 +1,8 @@
-from sqlalchemy import (
-    Column,
-    ForeignKey,
-    JSON,
-    UUID, String, Boolean
-)
+from sqlalchemy import JSON, UUID, Boolean, Column, ForeignKey, String
+from sqlalchemy.orm import relationship
 
 from app.database.models.base import Base
-from app.database.models.utils import UIDType, ModelTemplate
-from sqlalchemy.orm import relationship
+from app.database.models.utils import ModelTemplate, UIDType
 
 
 class ReviewModel(ModelTemplate, Base):
@@ -22,4 +17,4 @@ class ReviewModel(ModelTemplate, Base):
     shared = Column(Boolean, default=False)
 
     # Always fetch the usermodel, when fetching a review
-    reviewer = relationship("UserModel", back_populates='reviews', lazy=False)
+    reviewer = relationship("UserModel", back_populates="reviews", lazy=False)

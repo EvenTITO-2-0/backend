@@ -1,10 +1,14 @@
 from uuid import UUID
 
-from app.exceptions.reviews_exceptions import IsNotWorkRevisionPeriod, CannotPublishReviews, AlreadyReviewExist
+from app.exceptions.reviews_exceptions import AlreadyReviewExist, CannotPublishReviews, IsNotWorkRevisionPeriod
 from app.repository.reviews_repository import ReviewsRepository
 from app.schemas.users.utils import UID
-from app.schemas.works.review import ReviewUploadSchema, ReviewCreateRequestSchema, ReviewResponseSchema, \
-    ReviewPublishSchema
+from app.schemas.works.review import (
+    ReviewCreateRequestSchema,
+    ReviewPublishSchema,
+    ReviewResponseSchema,
+    ReviewUploadSchema,
+)
 from app.services.event_submissions.event_submissions_service import SubmissionsService
 from app.services.services import BaseService
 from app.services.storage.work_storage_service import WorkStorageService
@@ -14,14 +18,14 @@ from app.utils.utils import is_valid_datetime
 
 class EventReviewsService(BaseService):
     def __init__(
-            self,
-            event_id: UUID,
-            work_id: UUID,
-            caller_id: UID,
-            work_service: WorksService,
-            submission_service: SubmissionsService,
-            storage_service: WorkStorageService,
-            reviews_repository: ReviewsRepository,
+        self,
+        event_id: UUID,
+        work_id: UUID,
+        caller_id: UID,
+        work_service: WorksService,
+        submission_service: SubmissionsService,
+        storage_service: WorkStorageService,
+        reviews_repository: ReviewsRepository,
     ):
         self.event_id = event_id
         self.work_id = work_id
@@ -51,11 +55,7 @@ class EventReviewsService(BaseService):
             raise AlreadyReviewExist(self.event_id, self.work_id, last_submission.id)
 
         saved_review = await self.reviews_repository.create_review(
-            self.event_id,
-            self.work_id,
-            self.caller_id,
-            last_submission.id,
-            review_schema
+            self.event_id, self.work_id, self.caller_id, last_submission.id, review_schema
         )
         upload_url = await self.storage_service.get_review_upload_url(saved_review.id)
         return ReviewUploadSchema(**saved_review.model_dump(), upload_url=upload_url)

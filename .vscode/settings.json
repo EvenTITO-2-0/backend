@@ -68,11 +68,6 @@
     "ruff.lint.args": [
         "--config=pyproject.toml"
     ],
-    // Black configuration
-    "black-formatter.args": [
-        "--config",
-        "pyproject.toml"
-    ],
     // Git settings
     "git.enableSmartCommit": true,
     "git.confirmSync": false,
@@ -92,7 +87,7 @@
     // Workspace specific settings
     "[python]": {
         "editor.formatOnSave": true,
-        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.rulers": [
             120
         ],

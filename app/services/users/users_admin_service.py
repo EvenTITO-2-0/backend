@@ -1,8 +1,8 @@
 from app.database.models.user import UserRole
+from app.exceptions.users_exceptions import CantRemoveLastAdmin, UserNotFound
 from app.repository.users_repository import UsersRepository
 from app.schemas.users.user import UserReply
 from app.schemas.users.user_role import UserRoleSchema
-from app.exceptions.users_exceptions import CantRemoveLastAdmin, UserNotFound
 from app.schemas.users.utils import UID
 from app.services.services import BaseService
 
@@ -23,9 +23,9 @@ class UsersAdminService(BaseService):
         always at least one admin.
         """
         if (
-                (self.admin_id == user_id)
-                and (role != UserRole.ADMIN)
-                and (await self.users_repository.get_amount_admins() == 1)
+            (self.admin_id == user_id)
+            and (role != UserRole.ADMIN)
+            and (await self.users_repository.get_amount_admins() == 1)
         ):
             raise CantRemoveLastAdmin()
 

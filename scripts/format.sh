@@ -7,4 +7,4 @@ if ! docker compose -f docker-compose-dev.yaml ps --status running | grep -q bac
 fi
 
 # Run formatters
-docker compose -f docker-compose-dev.yaml exec backend bash -c "black . && ruff check --fix ."
+docker compose -f docker-compose-dev.yaml exec backend bash -c "ruff check --fix . && ruff format ."

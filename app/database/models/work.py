@@ -1,14 +1,14 @@
 import enum
 
 from sqlalchemy import (
-    UUID,
-    Column,
-    String,
-    ForeignKey,
-    UniqueConstraint,
-    DateTime,
     ARRAY,
     JSON,
+    UUID,
+    Column,
+    DateTime,
+    ForeignKey,
+    String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -38,8 +38,6 @@ class WorkModel(ModelTemplate, Base):
     state = Column(String, nullable=False, default=WorkStates.SUBMITTED)
     deadline_date = Column(DateTime, nullable=False)
 
-    __table_args__ = (
-        UniqueConstraint('event_id', 'title', name='event_id_title_uc'),
-    )
+    __table_args__ = (UniqueConstraint("event_id", "title", name="event_id_title_uc"),)
 
-    reviewers = relationship("ReviewerModel", back_populates='work', lazy=True)
+    reviewers = relationship("ReviewerModel", back_populates="work", lazy=True)

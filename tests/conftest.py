@@ -1,11 +1,11 @@
-from .fixtures.tests_configuration_fixtures import *  # noqa: F401, F403
-from .fixtures.storage_mock_fixtures import *  # noqa: F401, F403
 from .fixtures.application_setup_fixtures import *  # noqa: F401, F403
-from .fixtures.data.users_fixtures import *  # noqa: F401, F403
 from .fixtures.data.events_creator_fixtures import *  # noqa: F401, F403
 from .fixtures.data.events_fixtures import *  # noqa: F401, F403
+from .fixtures.data.events_members_fixtures import *  # noqa: F401, F403
 from .fixtures.data.inscriptions_fixtures import *  # noqa: F401, F403
 from .fixtures.data.organizers_fixtures import *  # noqa: F401, F403
-from .fixtures.data.works_fixtures import *  # noqa: F401, F403
-from .fixtures.data.events_members_fixtures import *  # noqa: F401, F403
 from .fixtures.data.submissions_fixtures import *  # noqa: F401, F403
+from .fixtures.data.users_fixtures import *  # noqa: F401, F403
+from .fixtures.data.works_fixtures import *  # noqa: F401, F403
+from .fixtures.storage_mock_fixtures import *  # noqa: F401, F403
+from .fixtures.tests_configuration_fixtures import *  # noqa: F401, F403

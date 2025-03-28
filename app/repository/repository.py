@@ -1,6 +1,6 @@
-from app.database.session_dep import SessionDep
 from typing import Type
 
+from app.database.session_dep import SessionDep
 from app.repository.crud_repository import Repository
 
 
