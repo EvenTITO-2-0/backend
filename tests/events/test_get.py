@@ -139,7 +139,7 @@ async def test_get_all_events_public_is_status_created2(client, create_many_even
 
 @pytest.mark.skip(reason="TODO: Write this code. Which date should we take? Or add a param for ordering?")
 async def test_get_all_events_should_be_ordered_by_something():
-    assert False
+    raise AssertionError("Test not implemented yet")
 
 
 async def test_get_event_with_organizer_role(client, create_event_from_event_creator, create_event_creator):

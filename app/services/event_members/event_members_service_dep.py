@@ -14,9 +14,9 @@ class EventsMemberChecker:
     async def __call__(
             self,
             event_id: UUID,
-            users_repository: UsersRepository = Depends(get_repository(UsersRepository)),
-            organizers_repository: OrganizerRepository = Depends(get_repository(OrganizerRepository)),
-            chair_repository: ChairRepository = Depends(get_repository(ChairRepository)),
+            users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
+            organizers_repository: Annotated[OrganizerRepository, Depends(get_repository(OrganizerRepository))],
+            chair_repository: Annotated[ChairRepository, Depends(get_repository(ChairRepository))],
     ) -> EventMembersService:
         return EventMembersService(
             event_id,

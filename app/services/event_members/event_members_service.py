@@ -33,14 +33,14 @@ class EventMembersService(BaseService):
         result = []
         for role, repository in self.repositories.items():
             members = await repository.get_all(self.event_id)
-            result += list(map(lambda x: EventMembersService.__map_to_schema(x, role), members))
+            result += [EventMembersService.__map_to_schema(x, role) for x in members]
 
         result.sort(key=attrgetter("user_id"))
 
         members_response = []
-        for k, v in groupby(result, key=attrgetter("user_id")):
+        for _, v in groupby(result, key=attrgetter("user_id")):
             group = list(v)
-            roles = list(reduce(lambda x, y: x + y, map(lambda x: x.roles, group)))
+            roles = list(reduce(lambda x, y: x + y, [x.roles for x in group]))
             member = MemberResponseWithRolesSchema(**({**(group[0].model_dump(mode="json")), "roles": roles}))
             members_response.append(member)
         return members_response

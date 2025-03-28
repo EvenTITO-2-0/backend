@@ -124,4 +124,4 @@ async def test_get_my_events_includes_events_where_i_am_chair(client, create_eve
 
 @pytest.mark.skip(reason="TODO: Write this code. Which date should we take? Or add a param for ordering?")
 async def test_get_my_events_should_be_ordered_by_date():
-    assert False
+    raise AssertionError("Test not implemented yet")

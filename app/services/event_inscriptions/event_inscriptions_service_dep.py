@@ -22,7 +22,7 @@ class EventInscriptionsServiceChecker:
             event_configuration_service: EventsConfigurationServiceDep,
             event_payment_service: EventPaymentsServiceDep,
             storage_service: EventInscriptionStorageServiceDep,
-            inscriptions_repository: InscriptionsRepository = Depends(get_repository(InscriptionsRepository)),
+            inscriptions_repository: Annotated[InscriptionsRepository, Depends(get_repository(InscriptionsRepository))],
     ) -> EventInscriptionsService:
         return EventInscriptionsService(
             event_configuration_service,

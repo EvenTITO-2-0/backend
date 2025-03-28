@@ -91,7 +91,7 @@ class EventsNotificationsService(NotificationsService):
     async def __search_emails_organizers(self, event):
         emails_to_send = []
         users_organizers = await self.organizer_repository.get_all(event.id)
-        for user, organizer in users_organizers:
+        for user, _ in users_organizers:
             if user.email is not None:
                 emails_to_send.append(user.email)
 

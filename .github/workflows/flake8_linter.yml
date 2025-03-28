@@ -1,7 +1,12 @@
 # TODO: remove this file once code-quality.yml is working
 name: flake8 Lint
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
+    types: [ opened, synchronize ]
 
 jobs:
   flake8-lint:

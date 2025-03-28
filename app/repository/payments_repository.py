@@ -35,7 +35,7 @@ class PaymentsRepository(Repository):
             event_id=payment.event_id,
             inscription_id=payment.inscription_id,
             status=payment.status,
-            works=map(lambda work: PaymentWorkSchema(id=work.id, title=work.title, track=work.track), works or []),
+            works=[PaymentWorkSchema(id=work.id, title=work.title, track=work.track) for work in works or []],
             fare_name=payment.fare_name,
             creation_date=payment.creation_date,
             last_update=payment.last_update,
@@ -67,9 +67,7 @@ class PaymentsRepository(Repository):
                     event_id=row.event_id,
                     inscription_id=row.inscription_id,
                     status=row.status,
-                    works=map(
-                        lambda work: PaymentWorkSchema(id=work.id, title=work.title, track=work.track), works or []
-                    ),
+                    works=[PaymentWorkSchema(id=work.id, title=work.title, track=work.track) for work in works or []],
                     fare_name=row.fare_name,
                     creation_date=row.creation_date,
                     last_update=row.last_update,
