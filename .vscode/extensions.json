@@ -1,0 +1,30 @@
+{
+    "recommendations": [
+        // Python core
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+
+        // Docker support
+        "ms-azuretools.vscode-docker",
+
+        // Remote development
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode-remote.remote-ssh",
+
+        // Git tools
+        "eamodio.gitlens",
+
+        // Python enhancements
+        "njpwerner.autodocstring",  // Python docstring generator
+        "aaron-bond.better-comments",  // Better comments highlighting
+        "ms-python.black-formatter",  // Black formatter
+        "ms-python.flake8",  // Flake8 linting
+        "ms-python.isort",   // Import sorting
+
+        // General development
+        "streetsidesoftware.code-spell-checker",  // Spell checking
+        "yzhang.markdown-all-in-one",  // Markdown support
+        "christian-kohler.path-intellisense"  // Path autocompletion
+    ],
+    "unwantedRecommendations": []
+}

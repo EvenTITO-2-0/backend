@@ -1,0 +1,92 @@
+{
+    "FastAPI Router": {
+        "prefix": "fastrouter",
+        "body": [
+            "from fastapi import APIRouter, Depends",
+            "from app.database.session_dep import AsyncSessionDep",
+            "",
+            "router = APIRouter(",
+            "    prefix=\"/${1:prefix}\",",
+            "    tags=[\"${2:tag}\"]",
+            ")",
+            "",
+            "",
+            "@router.get(\"/\")",
+            "async def get_${3:items}(db: AsyncSessionDep):",
+            "    ${0:pass}",
+            ""
+        ],
+        "description": "Create a new FastAPI router"
+    },
+    "Pydantic Model": {
+        "prefix": "pydmodel",
+        "body": [
+            "from pydantic import BaseModel, ConfigDict",
+            "",
+            "",
+            "class ${1:Name}Schema(BaseModel):",
+            "    model_config = ConfigDict(from_attributes=True)",
+            "    ${0:pass}",
+            ""
+        ],
+        "description": "Create a new Pydantic model"
+    },
+    "SQLAlchemy Model": {
+        "prefix": "sqlmodel",
+        "body": [
+            "from sqlalchemy import Column, Integer, String, ForeignKey",
+            "from sqlalchemy.orm import relationship",
+            "from app.database.models.base import Base",
+            "",
+            "",
+            "class ${1:Name}Model(Base):",
+            "    __tablename__ = \"${2:tablename}\"",
+            "",
+            "    id = Column(Integer, primary_key=True, index=True)",
+            "    ${0:pass}",
+            ""
+        ],
+        "description": "Create a new SQLAlchemy model"
+    },
+    "Repository Class": {
+        "prefix": "repository",
+        "body": [
+            "from app.repository.crud_repository import Repository",
+            "from app.database.models.${1:model} import ${2:Model}Model",
+            "",
+            "",
+            "class ${3:Name}Repository(Repository):",
+            "    def __init__(self, session):",
+            "        super().__init__(session, ${2:Model}Model)",
+            "    ${0:pass}",
+            ""
+        ],
+        "description": "Create a new repository class"
+    },
+    "Service Class": {
+        "prefix": "service",
+        "body": [
+            "from app.services.services import BaseService",
+            "",
+            "",
+            "class ${1:Name}Service(BaseService):",
+            "    ${0:pass}",
+            ""
+        ],
+        "description": "Create a new service class"
+    },
+    "Test Function": {
+        "prefix": "pytest",
+        "body": [
+            "import pytest",
+            "from httpx import AsyncClient",
+            "",
+            "",
+            "@pytest.mark.asyncio",
+            "async def test_${1:name}(async_client: AsyncClient):",
+            "    ${0:pass}",
+            ""
+        ],
+        "description": "Create a new pytest test function"
+    }
+}

@@ -35,6 +35,26 @@ restart:
 shell:
 	$(DOCKER_COMPOSE_DEV) exec backend bash
 
+# Format code with black and ruff
+.PHONY: format
+format:
+	./scripts/format.sh
+
+# Run type checking with mypy
+.PHONY: typecheck
+typecheck:
+	./scripts/typecheck.sh
+
+# Run all checks (format, type check, test)
+.PHONY: check
+check:
+	./scripts/check.sh
+
+# Install local dependencies
+.PHONY: install
+install:
+	./scripts/local_setup.sh
+
 # Help command to list all available commands
 .PHONY: help
 help:
@@ -46,4 +66,8 @@ help:
 	@echo "  logs            - View logs of all containers"
 	@echo "  restart         - Restart all containers"
 	@echo "  shell           - Enter backend container shell"
-	@echo "  help            - Show this help message" 
+	@echo "  format          - Format code with black and ruff"
+	@echo "  typecheck       - Run type checking with mypy"
+	@echo "  check           - Run all checks (format, type check, test)"
+	@echo "  install         - Install local dependencies"
+	@echo "  help            - Show this help message"

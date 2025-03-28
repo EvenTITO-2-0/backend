@@ -1,0 +1,57 @@
+{
+    "name": "Eventito Development",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "workspaceFolder": "/workspaces/backend",
+    // Mount Docker socket and project files
+    "mounts": [
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+        "source=${localWorkspaceFolder},target=/workspaces/backend,type=bind,consistency=cached"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "ms-python.flake8",
+                "ms-python.isort",
+                "ms-azuretools.vscode-docker",
+                "eamodio.gitlens",
+                "njpwerner.autodocstring",
+                "aaron-bond.better-comments",
+                "streetsidesoftware.code-spell-checker",
+                "yzhang.markdown-all-in-one",
+                "christian-kohler.path-intellisense"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.analysis.extraPaths": [
+                    "/workspaces/backend/app"
+                ],
+                "python.analysis.typeCheckingMode": "basic",
+                "[python]": {
+                    "editor.formatOnSave": true,
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.rulers": [
+                        120
+                    ],
+                    "editor.codeActionsOnSave": {
+                        "source.fixAll": true,
+                        "source.organizeImports": true
+                    }
+                }
+            }
+        }
+    },
+    // Use bash as default shell
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {
+            "version": "latest"
+        }
+    },
+    // Start command
+    "postCreateCommand": "git config --global core.editor 'code --wait'"
+}
