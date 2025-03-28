@@ -8,11 +8,7 @@ from app.services.event_reviewers.event_reviewers_service_dep import EventReview
 
 
 class IsReviewer:
-    async def __call__(
-            self,
-            caller_id: CallerIdDep,
-            reviewer_service: EventReviewerServiceDep
-    ) -> bool:
+    async def __call__(self, caller_id: CallerIdDep, reviewer_service: EventReviewerServiceDep) -> bool:
         return await reviewer_service.is_reviewer_in_event(caller_id)
 
 
@@ -31,10 +27,10 @@ ReviewerDep = Annotated[None, Depends(verify_is_reviewer)]
 
 class IsWorkReviewer:
     async def __call__(
-            self,
-            caller_id: CallerIdDep,
-            work_id: UUID,
-            reviewer_service: EventReviewerServiceDep,
+        self,
+        caller_id: CallerIdDep,
+        work_id: UUID,
+        reviewer_service: EventReviewerServiceDep,
     ) -> bool:
         return await reviewer_service.is_reviewer_of_work_in_event(caller_id, work_id)
 

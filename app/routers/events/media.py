@@ -7,10 +7,7 @@ from app.schemas.storage.schemas import UploadURLSchema
 from app.services.storage.event_storage_service import EventsStaticFiles
 from app.services.storage.event_storage_service_dep import EventStorageServiceDep
 
-events_media_router = APIRouter(
-    prefix="/{event_id}/upload_url",
-    tags=["Events: Multimedia"]
-)
+events_media_router = APIRouter(prefix="/{event_id}/upload_url", tags=["Events: Multimedia"])
 
 
 @events_media_router.get(path="/{media}", dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)])

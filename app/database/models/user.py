@@ -27,6 +27,6 @@ class UserModel(DateTemplate, Base):
     city = Column(String, nullable=True)
     country = Column(String, nullable=True)
 
-    reviews = relationship("ReviewModel", back_populates='reviewer', lazy=True)
-    inscriptions = relationship("InscriptionModel", back_populates='user', lazy=True)
-    events = relationship("EventModel", back_populates='creator', lazy=True)
+    reviews = relationship("ReviewModel", back_populates="reviewer", lazy=True)
+    inscriptions = relationship("InscriptionModel", back_populates="user", lazy=True)
+    events = relationship("EventModel", back_populates="creator", lazy=True)

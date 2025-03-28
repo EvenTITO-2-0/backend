@@ -12,18 +12,13 @@ from app.services.storage.event_inscription_storage_service_dep import EventInsc
 
 class EventPaymentsServiceChecker:
     async def __call__(
-            self,
-            event_id: UUID,
-            caller_id: CallerIdDep,
-            storage_service: EventInscriptionStorageServiceDep,
-            payments_repository: PaymentsRepository = Depends(get_repository(PaymentsRepository)),
+        self,
+        event_id: UUID,
+        caller_id: CallerIdDep,
+        storage_service: EventInscriptionStorageServiceDep,
+        payments_repository: Annotated[PaymentsRepository, Depends(get_repository(PaymentsRepository))],
     ) -> EventPaymentsService:
-        return EventPaymentsService(
-            storage_service,
-            payments_repository,
-            event_id,
-            caller_id
-        )
+        return EventPaymentsService(storage_service, payments_repository, event_id, caller_id)
 
 
 event_payments_checker = EventPaymentsServiceChecker()

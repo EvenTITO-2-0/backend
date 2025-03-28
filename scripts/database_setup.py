@@ -37,15 +37,9 @@ async def add_first_admin():
     print(f"Adding admin: {name}, {lastname}, {email}, {admin_id}")
 
     repository = UsersRepository(db)
-    admin_user = UserReply(
-        id=admin_id,
-        role=UserRole.ADMIN,
-        name=name,
-        lastname=lastname,
-        email=email
-    )
+    admin_user = UserReply(id=admin_id, role=UserRole.ADMIN, name=name, lastname=lastname, email=email)
     await repository.create(admin_user)
-    print('SUCCESS')
+    print("SUCCESS")
 
 
 async def create_models():
@@ -61,7 +55,7 @@ async def create_models():
             print("SUCCESS")
         await add_first_admin()
     except Exception as e:
-        print(f'An error occurred: {str(e)}')
+        print(f"An error occurred: {str(e)}")
 
 
 if __name__ == "__main__":

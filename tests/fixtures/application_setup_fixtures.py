@@ -33,11 +33,7 @@ async def admin_data():
 
     user_id = "iuaealdasldanfas982983297232"
     user_to_create = UserReply(
-        name="Jorge",
-        lastname="Benitez",
-        email="jbenitez@email.com",
-        id=user_id,
-        role=UserRole.ADMIN
+        name="Jorge", lastname="Benitez", email="jbenitez@email.com", id=user_id, role=UserRole.ADMIN
     )
     users_repo = UsersRepository(session)
     await users_repo.create(user_to_create)

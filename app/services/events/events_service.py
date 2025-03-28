@@ -15,10 +15,10 @@ from app.services.services import BaseService
 
 class EventsService(BaseService):
     def __init__(
-            self,
-            events_repository: EventsRepository,
-            organizers_service: EventOrganizersService,
-            event_notification_service: EventsNotificationsService,
+        self,
+        events_repository: EventsRepository,
+        organizers_service: EventOrganizersService,
+        event_notification_service: EventsNotificationsService,
     ):
         self.events_repository = events_repository
         self.organizers_service = organizers_service
@@ -34,10 +34,7 @@ class EventsService(BaseService):
         else:
             status = EventStatus.WAITING_APPROVAL
 
-        event = EventConfigurationSchema(
-            **event.model_dump(mode='json'),
-            status=status
-        )
+        event = EventConfigurationSchema(**event.model_dump(mode="json"), status=status)
         event_created = await self.events_repository.create(creator_id, event)
 
         # Notify waiting approval event to creator event
@@ -52,13 +49,7 @@ class EventsService(BaseService):
         return await self.events_repository.get_all_events_for_user(caller_id, offset=offset, limit=limit)
 
     async def get_all_events(
-            self,
-            offset: int,
-
-            limit: int,
-            status: EventStatus | None,
-            title_search: str | None,
-            user_role: UserRole
+        self, offset: int, limit: int, status: EventStatus | None, title_search: str | None, user_role: UserRole
     ):
         if status != EventStatus.STARTED and user_role != UserRole.ADMIN:
             raise InvalidQueryEventNotCreatedNotAdmin(status, user_role)

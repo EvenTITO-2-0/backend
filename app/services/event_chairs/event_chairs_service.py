@@ -15,11 +15,11 @@ from app.services.services import BaseService
 
 class EventChairService(BaseService):
     def __init__(
-            self,
-            event_id: UUID,
-            events_configuration_service: EventsConfigurationService,
-            chair_repository: ChairRepository,
-            users_repository: UsersRepository
+        self,
+        event_id: UUID,
+        events_configuration_service: EventsConfigurationService,
+        chair_repository: ChairRepository,
+        users_repository: UsersRepository,
     ):
         self.event_id = event_id
         self.events_configuration_service = events_configuration_service
@@ -63,9 +63,5 @@ class EventChairService(BaseService):
             event_id=chair.event_id,
             user_id=chair.user_id,
             tracks=tracks,
-            user=UserSchema(
-                email=user.email,
-                name=user.name,
-                lastname=user.lastname
-            )
+            user=UserSchema(email=user.email, name=user.name, lastname=user.lastname),
         )

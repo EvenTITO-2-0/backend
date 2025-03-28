@@ -18,10 +18,7 @@ class InscriptionsRepository(Repository):
 
     async def inscribe(self, event_id: UUID, user_id: UID, inscription: InscriptionRequestSchema) -> InscriptionModel:
         db_inscription = InscriptionModel(
-            event_id=event_id,
-            user_id=user_id,
-            roles=inscription.roles,
-            affiliation=inscription.affiliation
+            event_id=event_id, user_id=user_id, roles=inscription.roles, affiliation=inscription.affiliation
         )
         return await self._create(db_inscription)
 
@@ -41,15 +38,12 @@ class InscriptionsRepository(Repository):
         conditions = [
             InscriptionModel.id == inscription_id,
             InscriptionModel.user_id == user_id,
-            InscriptionModel.event_id == event_id
+            InscriptionModel.event_id == event_id,
         ]
         return await self._get_with_conditions(conditions)
 
     async def update_inscription(
-            self,
-            inscription_update: InscriptionRequestSchema,
-            event_id: UUID,
-            inscription_id: UUID
+        self, inscription_update: InscriptionRequestSchema, event_id: UUID, inscription_id: UUID
     ) -> bool:
         conditions = [InscriptionModel.event_id == event_id, InscriptionModel.id == inscription_id]
         return await self._update_with_conditions(conditions, inscription_update)

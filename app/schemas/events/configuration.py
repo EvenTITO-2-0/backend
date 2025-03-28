@@ -9,6 +9,6 @@ class EventConfigurationSchema(
     DynamicEventSchema,
     StaticEventSchema,
     ReviewSkeletonResponseSchema,
-    EventStatusSchema
+    EventStatusSchema,
 ):
     pass

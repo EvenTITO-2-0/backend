@@ -42,35 +42,29 @@ events_router.include_router(events_payments_router)
     "/my-events",
     response_model=List[PublicEventWithRolesSchema],
     tags=["Events: General"],
-    dependencies=[Depends(verify_user_exists)]
+    dependencies=[Depends(verify_user_exists)],
 )
 async def read_my_events(
-        caller_id: CallerIdDep,
-        events_service: EventsServiceDep,
-        offset: int = 0,
-        limit: int = Query(default=100, le=100)
+    caller_id: CallerIdDep, events_service: EventsServiceDep, offset: int = 0, limit: int = Query(default=100, le=100)
 ) -> List[PublicEventWithRolesSchema]:
     return await events_service.get_my_events(caller_id, offset=offset, limit=limit)
 
 
 @events_router.get(path="/", response_model=List[PublicEventWithCreatorSchema], tags=["Events: General"])
 async def read_all_events(
-        user_role: UserDep,
-        events_service: EventsServiceDep,
-        status: EventStatus | None = None,
-        offset: int = 0,
-        limit: int = Query(default=100, le=100),
-        search: str | None = None,
+    user_role: UserDep,
+    events_service: EventsServiceDep,
+    status: EventStatus | None = None,
+    offset: int = 0,
+    limit: int = Query(default=100, le=100),
+    search: str | None = None,
 ):
     return await events_service.get_all_events(offset, limit, status, search, user_role)
 
 
 @events_router.post(path="", status_code=201, response_model=UUID, tags=["Events: General"])
 async def create_event(
-        event: CreateEventSchema,
-        user_role: UserDep,
-        caller_id: CallerIdDep,
-        events_service: EventsServiceDep
+    event: CreateEventSchema, user_role: UserDep, caller_id: CallerIdDep, events_service: EventsServiceDep
 ):
     return await events_service.create(event, caller_id, user_role)
 

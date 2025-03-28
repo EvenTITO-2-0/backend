@@ -13,4 +13,5 @@ class EventInscriptionStorage:
 
 event_inscription_storage_service = EventInscriptionStorage()
 EventInscriptionStorageServiceDep = Annotated[
-    EventInscriptionStorageService, Depends(event_inscription_storage_service)]
+    EventInscriptionStorageService, Depends(event_inscription_storage_service)
+]

@@ -14,15 +14,13 @@ class EventsStaticFiles(str, Enum):
 
 
 class EventsStorageService(StorageService):
-
     def __init__(self, event_id: UUID):
         super().__init__()
         self.event_id = event_id
 
     async def get_upload_url(self, file_to_get: EventsStaticFiles) -> UploadURLSchema:
         return await self.storage_client.generate_signed_upload_url(
-            bucket_name=self.storage_settings.EVENTS_BUCKET,
-            blob_name=f"{self.event_id}/{file_to_get.value}"
+            bucket_name=self.storage_settings.EVENTS_BUCKET, blob_name=f"{self.event_id}/{file_to_get.value}"
         )
 
     @staticmethod
@@ -35,14 +33,14 @@ class EventsStorageService(StorageService):
         return [
             ImgSchema(
                 name=EventsStaticFiles.MAIN_IMAGE,
-                url=EventsStorageService.get_public_event_url(event_id, EventsStaticFiles.MAIN_IMAGE)
+                url=EventsStorageService.get_public_event_url(event_id, EventsStaticFiles.MAIN_IMAGE),
             ),
             ImgSchema(
                 name=EventsStaticFiles.BROCHURE,
-                url=EventsStorageService.get_public_event_url(event_id, EventsStaticFiles.BROCHURE)
+                url=EventsStorageService.get_public_event_url(event_id, EventsStaticFiles.BROCHURE),
             ),
             ImgSchema(
                 name=EventsStaticFiles.BANNER_IMAGE,
-                url=EventsStorageService.get_public_event_url(event_id, EventsStaticFiles.BANNER_IMAGE)
-            )
+                url=EventsStorageService.get_public_event_url(event_id, EventsStaticFiles.BANNER_IMAGE),
+            ),
         ]

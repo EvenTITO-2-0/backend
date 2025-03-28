@@ -12,7 +12,7 @@ class UsersDependencyChecker:
     async def __call__(
         self,
         caller_id: CallerIdDep,
-        users_repository: UsersRepository = Depends(get_repository(UsersRepository)),
+        users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
     ) -> UsersService:
         return UsersService(users_repository, caller_id)
 

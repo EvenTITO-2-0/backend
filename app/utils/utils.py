@@ -4,7 +4,7 @@ import pendulum
 
 
 def now_datetime():
-    buenos_aires_tz = pendulum.timezone('America/Argentina/Buenos_Aires')
+    buenos_aires_tz = pendulum.timezone("America/Argentina/Buenos_Aires")
     return datetime.now(buenos_aires_tz)
 
 
@@ -16,6 +16,6 @@ def is_valid_date_and_time(date, time=None):
 
 
 def is_valid_datetime(_datetime):
-    _timezone = pendulum.timezone('America/Argentina/Buenos_Aires')
+    _timezone = pendulum.timezone("America/Argentina/Buenos_Aires")
     _datetime = _timezone.convert(_datetime)
     return _datetime <= now_datetime()

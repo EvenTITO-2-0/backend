@@ -14,7 +14,7 @@ class UsersAdmin:
         self,
         user_id: CallerIdDep,
         _: AdminUsrDep,
-        users_repository: UsersRepository = Depends(get_repository(UsersRepository)),
+        users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
     ) -> UsersAdminService:
         return UsersAdminService(users_repository, user_id)
 

@@ -13,22 +13,15 @@ from app.services.works.works_service_dep import WorksServiceDep
 
 class Submissions:
     async def __call__(
-            self,
-            user_id: CallerIdDep,
-            event_id: UUID,
-            work_id: UUID,
-            work_service: WorksServiceDep,
-            storage_service: WorkStorageServiceDep,
-            submission_repository: SubmissionsRepository = Depends(get_repository(SubmissionsRepository)),
+        self,
+        user_id: CallerIdDep,
+        event_id: UUID,
+        work_id: UUID,
+        work_service: WorksServiceDep,
+        storage_service: WorkStorageServiceDep,
+        submission_repository: Annotated[SubmissionsRepository, Depends(get_repository(SubmissionsRepository))],
     ) -> SubmissionsService:
-        return SubmissionsService(
-            submission_repository,
-            work_service,
-            storage_service,
-            user_id,
-            event_id,
-            work_id
-        )
+        return SubmissionsService(submission_repository, work_service, storage_service, user_id, event_id, work_id)
 
 
 submissions_service = Submissions()
