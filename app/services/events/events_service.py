@@ -34,8 +34,8 @@ class EventsService(BaseService):
         else:
             status = EventStatus.WAITING_APPROVAL
 
-        event = EventConfigurationSchema(**event.model_dump(mode="json"), status=status)
-        event_created = await self.events_repository.create(creator_id, event)
+        create_event = EventConfigurationSchema(**event.model_dump(mode="json"), status=status)
+        event_created = await self.events_repository.create(creator_id, create_event)
 
         # Notify waiting approval event to creator event
         if status.value == EventStatus.WAITING_APPROVAL.value:

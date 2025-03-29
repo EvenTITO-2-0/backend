@@ -33,7 +33,7 @@ class EventOrganizersService(BaseService):
         await self.organizer_repository.remove_member(self.event_id, user_id)
 
     @staticmethod
-    def __map_to_schema(model: (UserModel, MemberModel)) -> MemberResponseSchema:
+    def __map_to_schema(model: tuple[UserModel, MemberModel]) -> MemberResponseSchema:
         user, organizer = model
         return MemberResponseSchema(
             event_id=organizer.event_id,

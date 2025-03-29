@@ -34,7 +34,7 @@ class EventsNotificationsService(NotificationsService):
         self.event_repository = event_repository
         self.users_repository = users_repository
         self.organizer_repository = organizer_repository
-        self.recipients_emails = []
+        self.recipients_emails: list[str] = []
         self.background_tasks = background_tasks
 
     def __recipients_message(self):

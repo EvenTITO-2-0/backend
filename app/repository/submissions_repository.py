@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models.submission import SubmissionModel
 from app.repository.crud_repository import Repository
 from app.utils.utils import now_datetime
+from app.schemas.works.submission import SubmissionSchema
 
 
 class SubmissionsRepository(Repository):
@@ -18,7 +19,7 @@ class SubmissionsRepository(Repository):
         conditions = [self.model.event_id == event_id, self.model.work_id == work_id]
         return await self._get_many_with_conditions(conditions, offset, limit)
 
-    async def get_last_submission(self, event_id, work_id) -> SubmissionModel:
+    async def get_last_submission(self, event_id, work_id) -> SubmissionSchema:
         return await self._get_with_conditions(
             [
                 self.model.event_id == event_id,

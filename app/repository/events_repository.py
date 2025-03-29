@@ -50,10 +50,10 @@ class EventsRepository(Repository):
         )
         return await self._create(new_event)
 
-    async def _check_role_exists(self, model, event_id: UUID, user_id: UUID) -> bool:
+    async def _check_role_exists(self, model, event_id: UUID, user_id: UID) -> bool:
         return await self._exists_with_conditions([model.event_id == event_id, model.user_id == user_id])
 
-    async def get_roles(self, event_id: UUID, user_id: UUID) -> list[EventRole]:
+    async def get_roles(self, event_id: UUID, user_id: UID) -> list[EventRole]:
         roles = []
         if await self._check_role_exists(OrganizerModel, event_id, user_id):
             roles.append(EventRole.ORGANIZER)
@@ -146,4 +146,4 @@ class EventsRepository(Repository):
         if title_search is not None:
             query = query.filter(EventModel.title.ilike(f"%{title_search}%"))
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())

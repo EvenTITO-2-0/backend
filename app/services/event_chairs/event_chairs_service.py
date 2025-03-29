@@ -56,7 +56,7 @@ class EventChairService(BaseService):
         await self.chair_repository.update_tracks(self.event_id, user_id, valid_tracks)
 
     @staticmethod
-    def __map_to_schema(model: (UserModel, ChairModel)) -> ChairResponseSchema:
+    def __map_to_schema(model: tuple[UserModel, ChairModel]) -> ChairResponseSchema:
         user, chair = model
         tracks = chair.tracks if chair.tracks else []
         return ChairResponseSchema(

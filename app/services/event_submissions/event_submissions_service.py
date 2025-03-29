@@ -62,7 +62,7 @@ class SubmissionsService(BaseService):
         last_submission = await self.submission_repository.get_last_submission(self.event_id, self.work_id)
         return await self.__get_submission(last_submission)
 
-    async def __get_submission(self, submission: SubmissionModel) -> SubmissionDownloadSchema:
+    async def __get_submission(self, submission) -> SubmissionDownloadSchema:
         if submission is None:
             raise SubmissionNotFound(self.event_id, self.work_id)
         download_url = await self.storage_service.get_submission_read_url(submission.id)

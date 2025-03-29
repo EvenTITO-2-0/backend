@@ -74,7 +74,7 @@ class EventMembersService(BaseService):
                 await repository.create_member(self.event_id, user_id)
 
     @staticmethod
-    def __map_to_schema(model: (UserModel, MemberModel), role: EventRole) -> MemberResponseWithRolesSchema:
+    def __map_to_schema(model: tuple[UserModel, MemberModel], role: EventRole) -> MemberResponseWithRolesSchema:
         user, organizer = model
         return MemberResponseWithRolesSchema(
             event_id=organizer.event_id,
