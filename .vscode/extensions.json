@@ -14,6 +14,8 @@
         "charliermarsh.ruff", // Python linter and formatter
         "njpwerner.autodocstring", // Python docstring generator
         "aaron-bond.better-comments", // Better comments highlighting
+        // File format support
+        "tamasfe.even-better-toml", // TOML file support with formatting
         // General development
         "streetsidesoftware.code-spell-checker", // Spell checking
         "yzhang.markdown-all-in-one", // Markdown support

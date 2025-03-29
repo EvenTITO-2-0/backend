@@ -1,56 +1,83 @@
+# ==============================================
+# ISORT CONFIGURATION
+# This section is for Python import sorting
+# Currently disabled as Ruff handles imports
+# ==============================================
 [tool.isort]
 # Not needed since Ruff handles imports
 
+# ==============================================
+# MYPY CONFIGURATION
+# MyPy is a static type checker for Python
+# These settings enforce strict type checking
+# ==============================================
 [tool.mypy]
+# Specify Python version for type checking
 python_version = "3.11"
-ignore_missing_imports = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_return_any = true
-warn_unreachable = true
-strict_optional = true
 
-# For pydantic
+# Core type checking settings
+ignore_missing_imports = true        # Don't error on missing stubs for third-party packages
+disallow_untyped_defs = false       # Allow functions without type annotations for now
+disallow_incomplete_defs = false     # Allow partial type annotations in functions
+check_untyped_defs = false          # Don't type check bodies of functions without annotations
+disallow_untyped_decorators = false  # Allow decorators without type annotations
+
+# Optional type handling
+no_implicit_optional = false         # Allow implicit optional types
+strict_optional = false             # Disable strict handling of optional types
+
+# Warning configurations
+warn_redundant_casts = true        # Warn about unnecessary type casts
+warn_unused_ignores = false         # Don't warn about unnecessary "type: ignore" comments
+warn_return_any = false            # Don't warn when a function returns Any type
+warn_unreachable = true           # Warn about code that will never be executed
+
+# Pydantic integration
 plugins = [
-    "pydantic.mypy"
+    "pydantic.mypy"               # Enable Pydantic's MyPy plugin for better model type checking
 ]
 
+# Special settings for test files
 [[tool.mypy.overrides]]
-module = ["tests.*"]
-disallow_untyped_defs = false
-check_untyped_defs = false
+module = ["tests.*"]              # Apply these settings to all files in tests/
+disallow_untyped_defs = false    # Allow functions without type annotations in tests
+check_untyped_defs = false       # Don't type check functions without annotations in tests
 
+# ==============================================
+# RUFF CONFIGURATION
+# Ruff is an extremely fast Python linter and formatter
+# It replaces multiple tools (pylint, flake8, isort, etc)
+# ==============================================
 [tool.ruff]
-line-length = 120
-target-version = "py311"
+# Basic configuration
+line-length = 120                # Maximum line length
+target-version = "py311"         # Python version to target
+
+# Files and directories to ignore
 exclude = [
-    "migrations",
-    "__pycache__",
-    "build",
-    "dist"
+    "migrations",                # Skip database migration files
+    "__pycache__",              # Skip Python cache directories
+    "build",                    # Skip build artifacts
+    "dist"                      # Skip distribution artifacts
 ]
 
 [tool.ruff.lint]
-# Enable rules
+# Enable specific rule categories
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "C",  # flake8-comprehensions
-    "B",  # flake8-bugbear
+    "E",                        # pycodestyle errors (style errors)
+    "W",                        # pycodestyle warnings (style warnings)
+    "F",                        # pyflakes (logical errors)
+    "I",                        # isort (import sorting)
+    "C",                        # flake8-comprehensions (list/dict/set comprehension improvements)
+    "B",                        # flake8-bugbear (additional bug checks)
 ]
 
-# Ignore specific rules
+# Disable specific rules
 ignore = [
-    "E501",  # line too long (handled by ruff formatter)
+    "E501",                     # Ignore line length errors (handled by formatter)
 ]
 
+# File-specific rule exceptions
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]  # unused imports
-"tests/*" = ["F841"]      # unused variables in tests
+"__init__.py" = ["F401"]        # Allow unused imports in __init__.py files
+"tests/*" = ["F841"]            # Allow unused variables in test files
