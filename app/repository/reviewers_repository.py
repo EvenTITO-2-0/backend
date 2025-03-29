@@ -78,9 +78,7 @@ class ReviewerRepository(MemberRepository):
             )
             .where(and_(ReviewerModel.event_id == event_id, ReviewerModel.user_id == user_id))
             .group_by(ReviewerModel.event_id, ReviewerModel.user_id)
-        )
-
-        group_by_subquery = group_by_subquery.subquery()
+        ).subquery()
 
         query = select(
             group_by_subquery.c.event_id, group_by_subquery.c.user_id, group_by_subquery.c.work_ids, UserModel

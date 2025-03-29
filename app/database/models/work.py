@@ -1,4 +1,5 @@
 import enum
+from typing import List
 
 from sqlalchemy import (
     ARRAY,
@@ -10,7 +11,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.models.base import Base
 from app.database.models.utils import ModelTemplate, UIDType
@@ -32,7 +33,7 @@ class WorkModel(ModelTemplate, Base):
     title = Column(String, nullable=False)
     track = Column(String, nullable=False)
     abstract = Column(String, nullable=False)
-    keywords = Column(ARRAY(String), nullable=False)
+    keywords: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False)
     authors = Column(JSON, nullable=False)
     talk = Column(JSON, nullable=True)
     state = Column(String, nullable=False, default=WorkStates.SUBMITTED)
