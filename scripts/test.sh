@@ -1,10 +1,10 @@
 #!/bin/bash
+BACKEND_RUNNING=$(docker compose -f docker-compose-dev.yaml ps backend | grep -c "backend" || true)
 
-# Check if backend container is running
-if ! docker compose -f docker-compose-dev.yaml ps --status running | grep -q backend; then
+if [ "$BACKEND_RUNNING" -eq 0 ]; then
     echo "Backend container is not running. Starting services..."
-    ./scripts/up.sh
+    bash ./scripts/up.sh
 fi
 
-# Run the tests
-docker compose -f docker-compose-dev.yaml exec backend bash -c "pytest; exec bash"
+echo "Running tests..."
+docker compose -f docker-compose-dev.yaml exec backend bash -c "pytest --exitfirst; echo 'You can run the tests with pytest --exitfirst'; exec bash"
