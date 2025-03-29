@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 
 from app.authorization.admin_user_dep import IsAdminUsrDep
 from app.authorization.caller_id_dep import CallerIdDep
@@ -34,7 +34,7 @@ async def add_reviewers(reviewers: ReviewerCreateRequestSchema, reviewer_service
 )
 async def read_event_reviewers(
     reviewer_service: EventReviewerServiceDep,
-    work_id: UUID = Query(default=None),
+    work_id: UUID | None = None,
 ) -> List[ReviewerWithWorksDeadlineResponseSchema]:
     return await reviewer_service.get_reviewers(work_id)
 

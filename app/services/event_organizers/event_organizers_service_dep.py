@@ -14,7 +14,7 @@ class EventsOrganizerChecker:
         self,
         users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
         organizers_repository: Annotated[OrganizerRepository, Depends(get_repository(OrganizerRepository))],
-        event_id: UUID | None = None
+        event_id: UUID | None = None,
     ) -> EventOrganizersService:
         return EventOrganizersService(event_id, organizers_repository, users_repository)
 

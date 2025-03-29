@@ -11,6 +11,7 @@
         // Git tools
         "eamodio.gitlens",
         // Python enhancements
+        "charliermarsh.ruff", // Python linter and formatter
         "njpwerner.autodocstring", // Python docstring generator
         "aaron-bond.better-comments", // Better comments highlighting
         // General development
