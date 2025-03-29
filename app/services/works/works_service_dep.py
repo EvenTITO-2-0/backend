@@ -22,7 +22,7 @@ class Works:
         event_id: UUID,
         events_configuration_service: EventsConfigurationServiceDep,
         inscription_service: EventInscriptionsServiceDep,
-        works_repository: WorksRepository = Depends(get_repository(WorksRepository)),
+        works_repository: Annotated[WorksRepository, Depends(get_repository(WorksRepository))],
     ) -> WorksService:
         return WorksService(
             caller_id,

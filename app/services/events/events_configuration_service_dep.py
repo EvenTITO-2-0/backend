@@ -12,7 +12,7 @@ class EventsConfigurationChecker:
     async def __call__(
         self,
         event_id: UUID,
-        events_repository: EventsRepository = Depends(get_repository(EventsRepository)),
+        events_repository: Annotated[EventsRepository, Depends(get_repository(EventsRepository))],
     ) -> EventsConfigurationService:
         return EventsConfigurationService(event_id, events_repository)
 

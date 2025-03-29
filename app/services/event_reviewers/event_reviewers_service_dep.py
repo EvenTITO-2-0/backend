@@ -19,8 +19,8 @@ class EventsReviewerChecker:
         event_notification_service: EventsNotificationServiceDep,
         events_service: EventsServiceDep,
         work_service: WorksServiceDep,
-        users_repository: UsersRepository = Depends(get_repository(UsersRepository)),
-        reviewer_repository: ReviewerRepository = Depends(get_repository(ReviewerRepository)),
+        users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
+        reviewer_repository: Annotated[ReviewerRepository, Depends(get_repository(ReviewerRepository))],
     ) -> EventReviewerService:
         return EventReviewerService(
             event_id, events_service, work_service, reviewer_repository, users_repository, event_notification_service

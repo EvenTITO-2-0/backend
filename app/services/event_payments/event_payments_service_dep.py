@@ -16,7 +16,7 @@ class EventPaymentsServiceChecker:
         event_id: UUID,
         caller_id: CallerIdDep,
         storage_service: EventInscriptionStorageServiceDep,
-        payments_repository: PaymentsRepository = Depends(get_repository(PaymentsRepository)),
+        payments_repository: Annotated[PaymentsRepository, Depends(get_repository(PaymentsRepository))],
     ) -> EventPaymentsService:
         return EventPaymentsService(storage_service, payments_repository, event_id, caller_id)
 

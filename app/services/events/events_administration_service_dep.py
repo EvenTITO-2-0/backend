@@ -14,7 +14,7 @@ class EventsAdministrationServiceChecker:
         self,
         event_id: UUID,
         events_notifications_service: EventsNotificationServiceDep,
-        events_repository: EventsRepository = Depends(get_repository(EventsRepository)),
+        events_repository: Annotated[EventsRepository, Depends(get_repository(EventsRepository))],
     ) -> EventsAdministrationService:
         return EventsAdministrationService(event_id, events_repository, events_notifications_service)
 
