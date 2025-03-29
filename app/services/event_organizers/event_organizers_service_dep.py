@@ -12,9 +12,9 @@ from app.services.event_organizers.event_organizers_service import EventOrganize
 class EventsOrganizerChecker:
     async def __call__(
         self,
-        event_id: UUID,
-        users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
-        organizers_repository: Annotated[OrganizerRepository, Depends(get_repository(OrganizerRepository))],
+        event_id: UUID | None = None,
+        users_repository: UsersRepository = Depends(get_repository(UsersRepository)),
+        organizers_repository: OrganizerRepository = Depends(get_repository(OrganizerRepository)),
     ) -> EventOrganizersService:
         return EventOrganizersService(event_id, organizers_repository, users_repository)
 

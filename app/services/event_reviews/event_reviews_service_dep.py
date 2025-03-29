@@ -21,7 +21,7 @@ class EventReviewsServiceChecker:
         work_service: WorksServiceDep,
         submission_service: SubmissionsServiceDep,
         storage_service: WorkStorageServiceDep,
-        reviews_repository: Annotated[ReviewsRepository, Depends(get_repository(ReviewsRepository))],
+        reviews_repository: ReviewsRepository = Depends(get_repository(ReviewsRepository)),
     ) -> EventReviewsService:
         return EventReviewsService(
             event_id, work_id, caller_id, work_service, submission_service, storage_service, reviews_repository

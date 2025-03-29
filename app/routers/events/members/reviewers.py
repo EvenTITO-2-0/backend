@@ -20,7 +20,6 @@ from app.schemas.users.utils import UID
 from app.services.event_reviewers.event_reviewers_service_dep import EventReviewerServiceDep
 
 event_reviewers_router = APIRouter(prefix="/{event_id}/reviewers", tags=["Events: Reviewers"])
-DEFAULT_WORK_ID = Query(default=None)
 
 
 @event_reviewers_router.post(path="", status_code=201, dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)])
@@ -35,7 +34,7 @@ async def add_reviewers(reviewers: ReviewerCreateRequestSchema, reviewer_service
 )
 async def read_event_reviewers(
     reviewer_service: EventReviewerServiceDep,
-    work_id: UUID = DEFAULT_WORK_ID,
+    work_id: UUID = Query(default=None),
 ) -> List[ReviewerWithWorksDeadlineResponseSchema]:
     return await reviewer_service.get_reviewers(work_id)
 

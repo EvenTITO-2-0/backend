@@ -19,7 +19,7 @@ class Submissions:
         work_id: UUID,
         work_service: WorksServiceDep,
         storage_service: WorkStorageServiceDep,
-        submission_repository: Annotated[SubmissionsRepository, Depends(get_repository(SubmissionsRepository))],
+        submission_repository: SubmissionsRepository = Depends(get_repository(SubmissionsRepository)),
     ) -> SubmissionsService:
         return SubmissionsService(submission_repository, work_service, storage_service, user_id, event_id, work_id)
 
