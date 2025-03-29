@@ -35,6 +35,7 @@ exclude = [
     "dist"
 ]
 
+[tool.ruff.lint]
 # Enable rules
 select = [
     "E",  # pycodestyle errors
@@ -50,6 +51,6 @@ ignore = [
     "E501",  # line too long (handled by ruff formatter)
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports
 "tests/*" = ["F841"]      # unused variables in tests

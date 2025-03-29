@@ -1,4 +1,4 @@
-name: Linting & Formatting
+name: Type Checking
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     types: [ opened, synchronize ]
 
 jobs:
-  ruff:
+  mypy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,8 +24,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Run Ruff Linting
-        run: ruff check .
-
-      - name: Run Ruff Formatting
-        run: ruff format --check .
+      - name: Run MyPy
+        run: mypy app
