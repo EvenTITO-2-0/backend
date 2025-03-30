@@ -1,5 +1,29 @@
 #!/bin/bash
 
+# Check if make is installed
+if ! command -v make &> /dev/null; then
+    echo "make is not installed. Attempting to install..."
+
+    # Check if apt-get is available
+    if ! command -v apt-get &> /dev/null; then
+        echo "This script requires apt-get (Ubuntu/Debian)"
+        echo "Please install make manually or use the Dev Container"
+        exit 1
+    fi
+
+    # Install make
+    echo "Installing make..."
+    sudo apt-get update
+    sudo apt-get install -y make
+
+    # Verify installation
+    if ! command -v make &> /dev/null; then
+        echo "make installation failed."
+        exit 1
+    fi
+    echo "make installed successfully!"
+fi
+
 # Check if Python 3.11 is installed
 if ! command -v python3.11 &> /dev/null; then
     echo "Python 3.11 is not installed. Attempting to install..."
@@ -45,6 +69,10 @@ if [ ! -f ".env" ]; then
     echo "Creating .env file from .env.example..."
     cp .env.example .env
 fi
+
+# Run database setup
+echo "Running database setup..."
+python3.11 scripts/database_setup.py
 
 echo "Local setup complete! You can now:"
 echo "1. Use 'source .venv/bin/activate' to activate the virtual environment"

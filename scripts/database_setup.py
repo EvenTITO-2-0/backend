@@ -54,6 +54,7 @@ async def create_models():
             await conn.run_sync(Base.metadata.create_all)
             print("SUCCESS")
         await add_first_admin()
+        # TODO: Add fake data to the database for development purposes.
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 

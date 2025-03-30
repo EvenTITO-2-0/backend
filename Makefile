@@ -54,7 +54,7 @@ check:
 # Install local dependencies
 .PHONY: install
 install:
-	./scripts/local_setup.sh
+	./scripts/setup.sh
 
 # Help command to list all available commands
 .PHONY: help
