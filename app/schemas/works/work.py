@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from app.database.models.work import WorkStates
+from app.schemas.users.utils import UID
 from app.schemas.works.author import AuthorInformation
 from app.schemas.works.talk import Talk
 
@@ -37,3 +38,7 @@ class WorkWithState(CreateWorkSchema, WorkStateSchema, WorkUpdateAdministrationS
     deadline_date: datetime
     creation_date: datetime
     last_update: datetime
+
+
+class CompleteWork(WorkWithState):
+    author_id: UID

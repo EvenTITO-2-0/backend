@@ -1,4 +1,3 @@
-from functools import reduce
 from itertools import groupby
 from operator import attrgetter
 from uuid import UUID
@@ -40,7 +39,7 @@ class EventMembersService(BaseService):
         members_response = []
         for _, v in groupby(result, key=attrgetter("user_id")):
             group = list(v)
-            roles = list(reduce(lambda x, y: x + y, [x.roles for x in group]))
+            roles = sum([list(x.roles) for x in group], [])
             member = MemberResponseWithRolesSchema(**({**(group[0].model_dump(mode="json")), "roles": roles}))
             members_response.append(member)
         return members_response

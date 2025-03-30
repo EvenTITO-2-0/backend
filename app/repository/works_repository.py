@@ -7,14 +7,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models.work import WorkModel
 from app.repository.crud_repository import Repository
 from app.schemas.users.utils import UID
-from app.schemas.works.work import CreateWorkSchema, WorkStateSchema, WorkUpdateAdministrationSchema, WorkUpdateSchema
+from app.schemas.works.work import (
+    CompleteWork,
+    CreateWorkSchema,
+    WorkStateSchema,
+    WorkUpdateAdministrationSchema,
+    WorkUpdateSchema,
+)
 
 
 class WorksRepository(Repository):
     def __init__(self, session: AsyncSession):
         super().__init__(session, WorkModel)
 
-    async def get_work(self, event_id: UUID, work_id: UUID) -> WorkModel:
+    async def get_work(self, event_id: UUID, work_id: UUID) -> CompleteWork:
         conditions = [WorkModel.event_id == event_id, WorkModel.id == work_id]
         start_time = time.time()
         work = await self._get_with_conditions(conditions)
@@ -44,9 +50,7 @@ class WorksRepository(Repository):
         conditions = [WorkModel.event_id == event_id, WorkModel.track == track]
         return await self._get_many_with_conditions(conditions, offset, limit)
 
-    async def create_work(
-        self, work: CreateWorkSchema, event_id: UUID, deadline_date: datetime, author_id: UID
-    ) -> WorkModel:
+    async def create_work(self, work: CreateWorkSchema, event_id: UUID, deadline_date: datetime, author_id: UID):
         work_model = WorkModel(**work.model_dump(), event_id=event_id, deadline_date=deadline_date, author_id=author_id)
         return await self._create(work_model)
 

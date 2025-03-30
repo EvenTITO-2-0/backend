@@ -16,7 +16,7 @@ class InscriptionsRepository(Repository):
         conditions = [InscriptionModel.event_id == event_id, InscriptionModel.user_id == user_id]
         return await self._exists_with_conditions(conditions)
 
-    async def inscribe(self, event_id: UUID, user_id: UID, inscription: InscriptionRequestSchema) -> InscriptionModel:
+    async def inscribe(self, event_id: UUID, user_id: UID, inscription: InscriptionRequestSchema):
         db_inscription = InscriptionModel(
             event_id=event_id, user_id=user_id, roles=inscription.roles, affiliation=inscription.affiliation
         )

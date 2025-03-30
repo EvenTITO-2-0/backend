@@ -4,7 +4,6 @@ from app.database.models.event import EventStatus
 from app.database.models.user import UserRole
 from app.exceptions.events_exceptions import EventNotFound, InvalidCaller, InvalidEventConfiguration
 from app.repository.events_repository import EventsRepository
-from app.schemas.events.dates import DatesCompleteSchema
 from app.schemas.events.event_status import EventStatusSchema
 from app.services.notifications.events_notifications_service import EventsNotificationsService
 from app.services.services import BaseService
@@ -37,11 +36,11 @@ class EventsAdministrationService(BaseService):
     def __all_mandatory_config_ok(self, event) -> bool:
         return True
         # TODO: HOTFIX to accept everything. This should not happen!
-        event_dates = DatesCompleteSchema.model_validate(event)
-        for date in event_dates.dates:
-            if date.date is None and date.time is None:
-                return False
-        return True
+        # event_dates = DatesCompleteSchema.model_validate(event)
+        # for date in event_dates.dates:
+        #     if date.date is None and date.time is None:
+        #         return False
+        # return True
 
     async def __notify_change(self, new_status, event):
         if new_status.status.value == EventStatus.CREATED.value:

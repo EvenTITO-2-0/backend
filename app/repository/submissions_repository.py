@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models.submission import SubmissionModel
 from app.repository.crud_repository import Repository
-from app.utils.utils import now_datetime
 from app.schemas.works.submission import SubmissionSchema
+from app.utils.utils import now_datetime
 
 
 class SubmissionsRepository(Repository):
