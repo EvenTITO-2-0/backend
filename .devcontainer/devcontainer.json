@@ -1,6 +1,7 @@
 {
     "name": "Eventito Development",
-    "image": "ubuntu:24.04",
+    "image": "mcr.microsoft.com/devcontainers/python:3.11",
+    "remoteUser": "vscode",
     "workspaceFolder": "/workspaces/backend",
     // Mount Docker socket and project files
     "mounts": [
@@ -21,6 +22,6 @@
     },
     "forwardPorts": [8080],
     // Start command
-    "postCreateCommand": "bash scripts/setup.sh",
+    "postCreateCommand": "sudo chmod 666 /var/run/docker.sock;bash scripts/setup.sh",
     "postStartCommand": "bash scripts/up.sh"
 }
