@@ -1,4 +1,12 @@
 # flake8: noqa
+import sys
+import os
+from dotenv import load_dotenv
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+sys.path.append(parent_dir)
+load_dotenv()
 from app.database.database import engine
 from app.database.session_dep import get_db
 from app.database.models.base import Base
@@ -16,14 +24,6 @@ import asyncio
 from app.schemas.users.user import UserReply
 from app.repository.users_repository import UsersRepository
 from app.database.models.user import UserRole
-import sys
-import os
-from dotenv import load_dotenv
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-sys.path.append(parent_dir)
-load_dotenv()
 
 
 async def add_first_admin():
