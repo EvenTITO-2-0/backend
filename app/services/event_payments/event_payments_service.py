@@ -10,11 +10,11 @@ from app.services.storage.event_inscription_storage_service import EventInscript
 
 class EventPaymentsService(BaseService):
     def __init__(
-            self,
-            storage_service: EventInscriptionStorageService,
-            payments_repository: PaymentsRepository,
-            event_id: UUID,
-            user_id: UID
+        self,
+        storage_service: EventInscriptionStorageService,
+        payments_repository: PaymentsRepository,
+        event_id: UUID,
+        user_id: UID,
     ):
         self.storage_service = storage_service
         self.payments_repository = payments_repository
@@ -31,17 +31,9 @@ class EventPaymentsService(BaseService):
         return await self.payments_repository.get_all_payments_for_event(self.event_id, offset, limit)
 
     async def get_inscription_payments(
-            self,
-            inscription_id: UUID,
-            offset: int,
-            limit: int
+        self, inscription_id: UUID, offset: int, limit: int
     ) -> list[PaymentsResponseSchema]:
-        return await self.payments_repository.get_payments_for_inscription(
-            self.event_id,
-            inscription_id,
-            offset,
-            limit
-        )
+        return await self.payments_repository.get_payments_for_inscription(self.event_id, inscription_id, offset, limit)
 
     async def update_payment_status(self, payment_id: UUID, new_status: PaymentStatusSchema) -> None:
         update_ok = await self.payments_repository.update_status(self.event_id, payment_id, new_status)

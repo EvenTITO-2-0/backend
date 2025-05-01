@@ -12,11 +12,11 @@ from app.services.events.events_configuration_service_dep import EventsConfigura
 
 class EventsChairChecker:
     async def __call__(
-            self,
-            event_id: UUID,
-            event_configuration_service: EventsConfigurationServiceDep,
-            users_repository: UsersRepository = Depends(get_repository(UsersRepository)),
-            chair_repository: ChairRepository = Depends(get_repository(ChairRepository)),
+        self,
+        event_id: UUID,
+        event_configuration_service: EventsConfigurationServiceDep,
+        users_repository: Annotated[UsersRepository, Depends(get_repository(UsersRepository))],
+        chair_repository: Annotated[ChairRepository, Depends(get_repository(ChairRepository))],
     ) -> EventChairService:
         return EventChairService(event_id, event_configuration_service, chair_repository, users_repository)
 

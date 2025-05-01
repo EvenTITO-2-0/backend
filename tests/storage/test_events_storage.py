@@ -1,14 +1,10 @@
 from app.services.storage.event_storage_service import EventsStaticFiles
+
 from ..commontest import create_headers
 
 
-async def test_get_event_contains_event_public_url(
-    client,
-    create_event,
-    create_user
-):
-    response = await client.get(f"/events/{create_event['id']}/public",
-                                headers=create_headers(create_user['id']))
+async def test_get_event_contains_event_public_url(client, create_event, create_user):
+    response = await client.get(f"/events/{create_event['id']}/public", headers=create_headers(create_user["id"]))
 
     assert response.status_code == 200
     assert response.json()["title"] == create_event["title"]
@@ -27,7 +23,7 @@ async def test_get_event_upload_url_must_be_event_organizer(
     for event_type in EventsStaticFiles:
         response = await client.get(
             f"/events/{create_event_from_event_creator}/upload_url/{event_type.value}",
-            headers=create_headers(create_organizer)
+            headers=create_headers(create_organizer),
         )
 
         assert response.status_code == 200
@@ -40,8 +36,7 @@ async def test_get_event_upload_url_not_organizer_fails(
     create_event_from_event_creator,
 ):
     response = await client.get(
-        f"/events/{create_event_from_event_creator}/upload_url/main_image",
-        headers=create_headers(create_user['id'])
+        f"/events/{create_event_from_event_creator}/upload_url/main_image", headers=create_headers(create_user["id"])
     )
 
     assert response.status_code == 403
@@ -54,7 +49,7 @@ async def test_get_event_upload_url_nonexistent_file_fails(
 ):
     response = await client.get(
         f"/events/{create_event_from_event_creator}/upload_url/nonexistent_image",
-        headers=create_headers(create_organizer)
+        headers=create_headers(create_organizer),
     )
 
     assert response.status_code == 422

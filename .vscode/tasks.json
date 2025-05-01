@@ -1,0 +1,92 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start Docker Debug",
+            "type": "shell",
+            "command": "docker compose -f docker-compose-dev.yaml up backend -d",
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Development Environment",
+            "type": "shell",
+            "command": "make up",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Stop Development Environment",
+            "type": "shell",
+            "command": "make down",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "make test",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Clear Database",
+            "type": "shell",
+            "command": "make clear",
+            "problemMatcher": []
+        },
+        {
+            "label": "View Logs",
+            "type": "shell",
+            "command": "make logs",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Shell into Backend",
+            "type": "shell",
+            "command": "make shell",
+            "problemMatcher": []
+        },
+        {
+            "label": "Format Code",
+            "type": "shell",
+            "command": "make format",
+            "problemMatcher": []
+        },
+        {
+            "label": "Type Check",
+            "type": "shell",
+            "command": "make typecheck",
+            "problemMatcher": {
+                "owner": "python",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}"
+                ],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "Run All Checks",
+            "type": "shell",
+            "command": "make check",
+            "problemMatcher": []
+        }
+    ]
+}

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import HTTPException, Depends
+from fastapi import Depends, HTTPException
 
 from app.authorization.caller_id_dep import CallerIdDep
 from app.schemas.users.utils import UID

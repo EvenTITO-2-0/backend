@@ -10,7 +10,4 @@ class OrganizerRepository(MemberRepository):
 
     def _primary_key_conditions(self, primary_key):
         event_id, organizer_id = primary_key
-        return [
-            OrganizerModel.event_id == event_id,
-            OrganizerModel.user_id == organizer_id
-        ]
+        return [OrganizerModel.event_id == event_id, OrganizerModel.user_id == organizer_id]

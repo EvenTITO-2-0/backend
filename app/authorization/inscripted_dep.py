@@ -7,11 +7,7 @@ from app.services.event_inscriptions.event_inscriptions_service_dep import Event
 
 
 class IsRegistered:
-    async def __call__(
-            self,
-            inscription_id: UUID,
-            inscription_service: EventInscriptionsServiceDep
-    ) -> bool:
+    async def __call__(self, inscription_id: UUID, inscription_service: EventInscriptionsServiceDep) -> bool:
         return await inscription_service.is_my_inscription(inscription_id)
 
 

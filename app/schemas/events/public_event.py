@@ -1,10 +1,10 @@
 from uuid import UUID
 
-from pydantic import computed_field, BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from app.schemas.events.event_status import EventStatusSchema
 from app.schemas.events.review_skeleton.review_skeleton import ReviewSkeletonResponseSchema
-from app.schemas.events.schemas import StaticEventSchema, DynamicEventSchema
+from app.schemas.events.schemas import DynamicEventSchema, StaticEventSchema
 from app.schemas.media.image import ImgSchema
 from app.schemas.users.utils import UID
 from app.services.storage.event_storage_service import EventsStorageService

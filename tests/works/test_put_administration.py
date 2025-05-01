@@ -1,24 +1,18 @@
 from fastapi.encoders import jsonable_encoder
 
 from app.database.models.work import WorkStates
-from app.schemas.works.work import WorkUpdateAdministrationSchema
 from app.schemas.works.talk import Talk
-from .test_create_work import USER_WORK
+from app.schemas.works.work import WorkUpdateAdministrationSchema
+
 from ..commontest import create_headers
+from .test_create_work import USER_WORK
 
 
 async def test_put_event_from_organizer(
-    client,
-    create_user,
-    create_work_from_user,
-    create_event_started,
-    admin_data,
-    create_speaker_inscription
+    client, create_user, create_work_from_user, create_event_started, admin_data, create_speaker_inscription
 ):
-
     work_response = await client.get(
-        f"/events/{create_event_started}/works/{create_work_from_user}",
-        headers=create_headers(create_user["id"])
+        f"/events/{create_event_started}/works/{create_work_from_user}", headers=create_headers(create_user["id"])
     )
 
     assert work_response.status_code == 200
@@ -28,19 +22,17 @@ async def test_put_event_from_organizer(
     assert work_get["track"] == "chemistry"
 
     update = WorkUpdateAdministrationSchema(
-        talk=Talk(date="2024-01-01 09:00:00", location='FIUBA, Av. Paseo Colon 850', duration=60),
-        track="math"
+        talk=Talk(date="2024-01-01 09:00:00", location="FIUBA, Av. Paseo Colon 850", duration=60), track="math"
     )
     response = await client.put(
         f"/events/{create_event_started}/works/{create_work_from_user}/administration",
         json=jsonable_encoder(update),
-        headers=create_headers(admin_data.id)
+        headers=create_headers(admin_data.id),
     )
     assert response.status_code == 204
 
     work_response = await client.get(
-        f"/events/{create_event_started}/works/{create_work_from_user}",
-        headers=create_headers(create_user["id"])
+        f"/events/{create_event_started}/works/{create_work_from_user}", headers=create_headers(create_user["id"])
     )
 
     assert work_response.status_code == 200

@@ -1,19 +1,21 @@
+import json
 import os
+
+from dotenv import load_dotenv
 from google.cloud import storage
 from google.oauth2 import service_account
-import json
-from dotenv import load_dotenv
+
 load_dotenv()
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"./eventito-key.json"
 
-json_file_content_string = os.getenv('GCP_CREDENTIALS')
+json_file_content_string = os.getenv("GCP_CREDENTIALS")
 
 service_account_info = json.loads(json_file_content_string)
 credentials = service_account.Credentials.from_service_account_info(service_account_info)
 
 
-def create_bucket(bucket_name, storage_class='STANDARD', location='us-east1', has_public_urls=False):
+def create_bucket(bucket_name, storage_class="STANDARD", location="us-east1", has_public_urls=False):
     storage_client = storage.Client()
 
     bucket = storage_client.bucket(bucket_name)
@@ -22,18 +24,20 @@ def create_bucket(bucket_name, storage_class='STANDARD', location='us-east1', ha
     bucket = storage_client.create_bucket(bucket, location=location)
     if has_public_urls:
         make_bucket_public(bucket)
-    print(f'Bucket {bucket.name} successfully created.')
+    print(f"Bucket {bucket.name} successfully created.")
 
 
 def make_bucket_public(bucket):
     policy = bucket.get_iam_policy(requested_policy_version=3)
-    policy.bindings.append({
-        "role": "roles/storage.objectViewer",
-        "members": {"allUsers"},
-    })
+    policy.bindings.append(
+        {
+            "role": "roles/storage.objectViewer",
+            "members": {"allUsers"},
+        }
+    )
     bucket.set_iam_policy(policy)
 
-    print(f'Bucket {bucket.name} is now public.')
+    print(f"Bucket {bucket.name} is now public.")
 
 
 def generate_signed_url_for_upload(bucket_name, blob_name, expiration=3600):
@@ -42,11 +46,7 @@ def generate_signed_url_for_upload(bucket_name, blob_name, expiration=3600):
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
 
-    url = blob.generate_signed_url(
-        version="v4",
-        expiration=expiration,
-        method="PUT"
-    )
+    url = blob.generate_signed_url(version="v4", expiration=expiration, method="PUT")
 
     return url
 
@@ -57,11 +57,7 @@ def generate_signed_url_for_read(bucket_name, blob_name, expiration=3600):
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
 
-    url = blob.generate_signed_url(
-        version="v4",
-        expiration=expiration,
-        method="GET"
-    )
+    url = blob.generate_signed_url(version="v4", expiration=expiration, method="GET")
 
     return url
 
@@ -70,15 +66,14 @@ def update_cors_policy(bucket_name):
     client = storage.Client()
 
     bucket = client.bucket(bucket_name)
-    print('Los cors son:', bucket.cors)
+    print("Los cors son:", bucket.cors)
 
     bucket.cors = [
         {
             "origin": ["https://eventito-frontend.vercel.app", "http://localhost:5173"],
             "method": ["PUT", "POST", "GET"],
             "responseHeader": ["Content-Type"],
-            "maxAgeSeconds": 3600
-
+            "maxAgeSeconds": 3600,
         }
     ]
 
@@ -157,16 +152,17 @@ def update_cors_policy(bucket_name):
 
 
 def create_all_buckets():
-    public_buckets = ['eventito-profile_images', 'eventito-static_event_content']
-    private_buckets = ['eventito-payments_and_certificates', 'eventito-submissions_and_reviews']
+    public_buckets = ["eventito-profile_images", "eventito-static_event_content"]
+    private_buckets = ["eventito-payments_and_certificates", "eventito-submissions_and_reviews"]
     for bucket in public_buckets:
         create_bucket(bucket, has_public_urls=True)
     for bucket in private_buckets:
         create_bucket(bucket, has_public_urls=False)
+
 
 # url = generate_signed_url_for_upload('eventito-profile_images', 'image.png')
 # print(url)
 
 
 create_all_buckets()
-update_cors_policy('eventito-static_event_content')
+update_cors_policy("eventito-static_event_content")

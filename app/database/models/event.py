@@ -1,7 +1,8 @@
 from enum import Enum
+from typing import List
 
-from sqlalchemy import Column, String, ForeignKey, JSON, ARRAY
-from sqlalchemy.orm import relationship
+from sqlalchemy import ARRAY, JSON, Column, ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.models.base import Base
 from app.database.models.utils import ModelTemplate, UIDType
@@ -33,15 +34,15 @@ class EventModel(ModelTemplate, Base):
     event_type = Column(String)
     status = Column(String, default=EventStatus.WAITING_APPROVAL)
     location = Column(String)
-    tracks = Column(ARRAY(String))
-    notification_mails = Column(ARRAY(String))
+    tracks: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=True)
+    notification_mails: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=True)
     review_skeleton = Column(JSON, default=None)
     pricing = Column(JSON, default=None)
     dates = Column(JSON)
     contact = Column(String, nullable=True)
     organized_by = Column(String, nullable=True)
-    media = Column(ARRAY(JSON), default=None)
+    media: Mapped[List[JSON]] = mapped_column(ARRAY(JSON), default=None, nullable=True)
     mdata = Column(JSON, default=None)
 
     organizers = relationship("OrganizerModel", back_populates="event")
-    creator = relationship("UserModel", back_populates='events', lazy=False)
+    creator = relationship("UserModel", back_populates="events", lazy=False)

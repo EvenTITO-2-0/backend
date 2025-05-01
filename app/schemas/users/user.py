@@ -1,6 +1,6 @@
 from typing import Self
 
-from pydantic import BaseModel, Field, EmailStr, model_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.schemas.users.user_role import UserRoleSchema
 from app.schemas.users.utils import UID
@@ -27,12 +27,12 @@ class UserModifySchema(UserFullNameSchema):
     city: str | None = Field(min_length=2, max_length=100, examples=["Ciudad Autónoma de Buenos Aires"], default=None)
     country: str | None = Field(min_length=2, max_length=100, examples=["Argentina"], default=None)
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_digits(self) -> Self:
         if self.identification_number and not self.identification_number.isdigit():
-            raise ValueError('identification_number must be digits only')
+            raise ValueError("identification_number must be digits only")
         if self.phone and not self.phone.isdigit():
-            raise ValueError('identification_number must be digits only')
+            raise ValueError("identification_number must be digits only")
         return self
 
 

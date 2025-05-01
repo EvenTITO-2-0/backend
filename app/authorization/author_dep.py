@@ -9,11 +9,7 @@ from app.services.works.works_service_dep import WorksServiceDep
 
 class IsAuthor:
     async def __call__(
-            self,
-            caller_id: CallerIdDep,
-            event_id: UUID,
-            work_id: UUID,
-            work_service: WorksServiceDep
+        self, caller_id: CallerIdDep, event_id: UUID, work_id: UUID, work_service: WorksServiceDep
     ) -> bool:
         return await work_service.is_my_work(caller_id, work_id)
 

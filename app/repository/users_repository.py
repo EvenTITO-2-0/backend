@@ -1,9 +1,9 @@
-from app.database.models.user import UserModel, UserRole
-from app.exceptions.users_exceptions import UserWithEmailNotFound
-from app.schemas.users.user import UserSchema
-from app.repository.crud_repository import Repository
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.models.user import UserModel, UserRole
+from app.exceptions.users_exceptions import UserWithEmailNotFound
+from app.repository.crud_repository import Repository
+from app.schemas.users.user import UserSchema
 from app.schemas.users.utils import UID
 
 

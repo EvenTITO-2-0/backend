@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.database.models.member import MemberModel
 from app.database.models.user import UserModel
-from app.exceptions.members.organizer.organizer_exceptions import UserNotIsOrganizer, AtLeastOneOrganizer
+from app.exceptions.members.organizer.organizer_exceptions import AtLeastOneOrganizer, UserNotIsOrganizer
 from app.repository.organizers_repository import OrganizerRepository
 from app.repository.users_repository import UsersRepository
 from app.schemas.members.member_schema import MemberResponseSchema
@@ -33,14 +33,10 @@ class EventOrganizersService(BaseService):
         await self.organizer_repository.remove_member(self.event_id, user_id)
 
     @staticmethod
-    def __map_to_schema(model: (UserModel, MemberModel)) -> MemberResponseSchema:
+    def __map_to_schema(model: tuple[UserModel, MemberModel]) -> MemberResponseSchema:
         user, organizer = model
         return MemberResponseSchema(
             event_id=organizer.event_id,
             user_id=organizer.user_id,
-            user=UserSchema(
-                email=user.email,
-                name=user.name,
-                lastname=user.lastname
-            )
+            user=UserSchema(email=user.email, name=user.name, lastname=user.lastname),
         )

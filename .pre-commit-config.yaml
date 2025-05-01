@@ -1,5 +1,33 @@
 repos:
--   repo: https://github.com/hhatto/autopep8
-    rev: v2.1.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
     hooks:
-    -   id: autopep8
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-python-jose
+          - types-requests
+          - types-PyYAML
+          - types-python-dateutil
+          - types-setuptools
+          - pydantic
+          - sqlalchemy[mypy]
+          - types-sqlalchemy
+          - pydantic-settings
+          - python-dotenv
+          - fastapi
+        args: [--config-file=pyproject.toml]

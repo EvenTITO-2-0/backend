@@ -11,10 +11,10 @@ from app.services.notifications.notifications_service_dep import EventsNotificat
 
 class EventsChecker:
     async def __call__(
-            self,
-            event_notification_service: EventsNotificationServiceDep,
-            organizers_service: EventOrganizersServiceDep,
-            events_repository: EventsRepository = Depends(get_repository(EventsRepository))
+        self,
+        event_notification_service: EventsNotificationServiceDep,
+        organizers_service: EventOrganizersServiceDep,
+        events_repository: Annotated[EventsRepository, Depends(get_repository(EventsRepository))],
     ) -> EventsService:
         return EventsService(events_repository, organizers_service, event_notification_service)
 

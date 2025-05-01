@@ -1,14 +1,16 @@
 from uuid import uuid4
 
 from sqlalchemy import Column, DateTime, String, func
-from sqlalchemy.orm import declarative_mixin
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import declarative_mixin
 
 
 @declarative_mixin
 class DateTemplate:
     creation_date = Column(DateTime, server_default=func.now(), nullable=False)
     last_update = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
 # func.now() documentation: https://docs.sqlalchemy.org/en/14/core/defaults.html#client-invoked-sql-expressions
 
 

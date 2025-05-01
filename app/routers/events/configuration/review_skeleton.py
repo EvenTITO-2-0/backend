@@ -11,25 +11,19 @@ review_skeleton_configuration_router = APIRouter(prefix="/review-skeleton")
 
 
 @review_skeleton_configuration_router.put(
-    path="",
-    status_code=204,
-    response_model=None,
-    dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)]
+    path="", status_code=204, response_model=None, dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)]
 )
 async def change_review_skeleton(
-        review_skeleton: ReviewSkeletonRequestSchema,
-        events_configuration_service: EventsConfigurationServiceDep,
+    review_skeleton: ReviewSkeletonRequestSchema,
+    events_configuration_service: EventsConfigurationServiceDep,
 ):
     await events_configuration_service.update_review_skeleton(review_skeleton)
 
 
 @review_skeleton_configuration_router.get(
-    path="",
-    status_code=200,
-    response_model=ReviewSkeletonResponseSchema,
-    dependencies=[Depends(verify_user_exists)]
+    path="", status_code=200, response_model=ReviewSkeletonResponseSchema, dependencies=[Depends(verify_user_exists)]
 )
 async def get_review_skeleton(
-        events_configuration_service: EventsConfigurationServiceDep,
+    events_configuration_service: EventsConfigurationServiceDep,
 ) -> ReviewSkeletonResponseSchema:
     return await events_configuration_service.get_review_skeleton()

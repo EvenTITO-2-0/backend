@@ -7,11 +7,7 @@ from app.services.event_organizers.event_organizers_service_dep import EventOrga
 
 
 class IsOrganizer:
-    async def __call__(
-            self,
-            caller_id: CallerIdDep,
-            organizers_service: EventOrganizersServiceDep
-    ) -> bool:
+    async def __call__(self, caller_id: CallerIdDep, organizers_service: EventOrganizersServiceDep) -> bool:
         return await organizers_service.is_organizer(caller_id)
 
 

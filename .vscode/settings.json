@@ -1,0 +1,117 @@
+{
+    // Python Development Settings
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/app"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.include": ["app/**/*.py"],
+    "python.analysis.indexing": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests",
+        "-v",
+        "--tb=short"
+    ],
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.terminal.activateEnvironment": true,
+
+    // Mypy Type Checker Settings
+    "mypy-type-checker.args": [
+        "--config-file=pyproject.toml"
+    ],
+
+    // Editor and Workspace Settings
+    "editor.formatOnSave": false,
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.rulers": [
+            120
+        ],
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+    },
+
+    // File Handling and Associations
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.associations": {
+        "*.yaml": "yaml",
+        "*.yml": "yaml",
+        "Dockerfile*": "dockerfile",
+        "*.env*": "properties",
+        ".env*": "properties",
+        "*.toml": "toml"
+    },
+    "[toml]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "tamasfe.even-better-toml"
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true,
+        "**/*.pyc": true,
+        ".coverage": true,
+        ".mypy_cache": true,
+        "**/.DS_Store": true
+    },
+
+    // Git and Source Control Settings
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.autofetch": true,
+    "git.enableCommitSigning": true,
+    "gitlens.codeLens.enabled": true,
+    "gitlens.currentLine.enabled": true,
+    "gitlens.hovers.currentLine.over": "line",
+    "gitlens.blame.format": "${author|10} ${agoOrDate|14-}",
+    "gitlens.blame.heatmap.enabled": true,
+    "gitlens.blame.highlight.enabled": true,
+    "scm.defaultViewMode": "tree",
+    "scm.alwaysShowRepositories": true,
+    "scm.repositories.visible": 5,
+
+    // Terminal Settings
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+        }
+    },
+
+    // Code Quality and Spell Checking
+    "cSpell.enabled": true,
+    "cSpell.allowCompoundWords": true,
+    "cSpell.ignorePaths": [
+        "*.yaml",
+        "*.yml",
+        "*.env",
+        "*.env.example",
+        "*.json",
+        ".gitignore",
+        ".codecov.yml",
+        "docker-compose-dev.yaml",
+        "docker-compose.yaml",
+        "pyproject.toml"
+    ],
+    "cSpell.words": [
+        "autoremove",
+        "devcontainer",
+        "dotenv",
+        "eventito",
+        "fastapi",
+        "mypy",
+        "pydantic",
+        "pytest",
+        "ruff",
+        "sqlalchemy",
+        "typecheck",
+        "uvicorn"
+    ]
+}

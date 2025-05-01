@@ -5,7 +5,7 @@ from annotated_types import Len
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.database.models.inscription import InscriptionRole, InscriptionStatus
-from app.schemas.storage.schemas import UploadURLSchema, DownloadURLSchema
+from app.schemas.storage.schemas import DownloadURLSchema, UploadURLSchema
 from app.schemas.users.utils import UID
 
 

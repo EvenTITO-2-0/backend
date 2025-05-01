@@ -27,10 +27,7 @@ ChairDep = Annotated[None, Depends(VerifyIsChair())]
 
 class IsTrackChair:
     async def __call__(
-            self,
-            caller_id: CallerIdDep,
-            chair_service: EventChairServiceDep,
-            track: str | None = Query(default=None)
+        self, caller_id: CallerIdDep, chair_service: EventChairServiceDep, track: str | None = Query(default=None)
     ) -> bool:
         if await chair_service.is_chair(caller_id):
             chair = await chair_service.get_chair(caller_id)
@@ -53,11 +50,11 @@ TrackChairDep = Annotated[None, Depends(verify_is_track_chair)]
 
 class IsWorkChair:
     async def __call__(
-            self,
-            caller_id: CallerIdDep,
-            chair_service: EventChairServiceDep,
-            work_service: WorksServiceDep,
-            work_id: UUID | Optional[UUID] | None = None
+        self,
+        caller_id: CallerIdDep,
+        chair_service: EventChairServiceDep,
+        work_service: WorksServiceDep,
+        work_id: UUID | Optional[UUID] | None = None,
     ) -> bool:
         if (work_id is not None) and (await chair_service.is_chair(caller_id)):
             chair = await chair_service.get_chair(caller_id)

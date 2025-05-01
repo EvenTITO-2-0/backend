@@ -1,4 +1,3 @@
-from functools import reduce
 from itertools import groupby
 from operator import attrgetter
 from uuid import UUID
@@ -11,8 +10,7 @@ from app.repository.chairs_repository import ChairRepository
 from app.repository.organizers_repository import OrganizerRepository
 from app.repository.users_repository import UsersRepository
 from app.schemas.events.roles import EventRole
-from app.schemas.members.member_schema import MemberRequestSchema, MemberResponseWithRolesSchema
-from app.schemas.members.member_schema import RolesRequestSchema
+from app.schemas.members.member_schema import MemberRequestSchema, MemberResponseWithRolesSchema, RolesRequestSchema
 from app.schemas.users.user import UserSchema
 from app.schemas.users.utils import UID
 from app.services.services import BaseService
@@ -20,37 +18,29 @@ from app.services.services import BaseService
 
 class EventMembersService(BaseService):
     def __init__(
-            self,
-            event_id: UUID,
-            organizer_repository: OrganizerRepository,
-            chair_repository: ChairRepository,
-            users_repository: UsersRepository,
+        self,
+        event_id: UUID,
+        organizer_repository: OrganizerRepository,
+        chair_repository: ChairRepository,
+        users_repository: UsersRepository,
     ):
         self.event_id = event_id
         self.users_repository = users_repository
-        self.repositories = {
-            EventRole.ORGANIZER: organizer_repository,
-            EventRole.CHAIR: chair_repository
-        }
+        self.repositories = {EventRole.ORGANIZER: organizer_repository, EventRole.CHAIR: chair_repository}
 
     async def get_all_members(self) -> list[MemberResponseWithRolesSchema]:
         result = []
         for role, repository in self.repositories.items():
             members = await repository.get_all(self.event_id)
-            result += list(map(lambda x: EventMembersService.__map_to_schema(x, role), members))
+            result += [EventMembersService.__map_to_schema(x, role) for x in members]
 
-        result.sort(key=attrgetter('user_id'))
+        result.sort(key=attrgetter("user_id"))
 
         members_response = []
-        for k, v in groupby(result, key=attrgetter('user_id')):
+        for _, v in groupby(result, key=attrgetter("user_id")):
             group = list(v)
-            roles = list(reduce(lambda x, y: x + y, map(lambda x: x.roles, group)))
-            member = MemberResponseWithRolesSchema(
-                **({
-                    **(group[0].model_dump(mode='json')),
-                    "roles": roles
-                })
-            )
+            roles = sum([list(x.roles) for x in group], [])
+            member = MemberResponseWithRolesSchema(**({**(group[0].model_dump(mode="json")), "roles": roles}))
             members_response.append(member)
         return members_response
 
@@ -83,15 +73,11 @@ class EventMembersService(BaseService):
                 await repository.create_member(self.event_id, user_id)
 
     @staticmethod
-    def __map_to_schema(model: (UserModel, MemberModel), role: EventRole) -> MemberResponseWithRolesSchema:
+    def __map_to_schema(model: tuple[UserModel, MemberModel], role: EventRole) -> MemberResponseWithRolesSchema:
         user, organizer = model
         return MemberResponseWithRolesSchema(
             event_id=organizer.event_id,
             user_id=organizer.user_id,
             roles=[role],
-            user=UserSchema(
-                email=user.email,
-                name=user.name,
-                lastname=user.lastname
-            )
+            user=UserSchema(email=user.email, name=user.name, lastname=user.lastname),
         )

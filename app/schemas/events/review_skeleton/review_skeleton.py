@@ -17,14 +17,15 @@ class ReviewSkeletonQuestionsAndRecommendation(ReviewSkeletonQuestions):
             question="Recomendación",
             options=["Aprobado", "Desaprobado", "A revisar"],
             type_question="multiple_choice",
-            more_than_one_answer_allowed=False
+            more_than_one_answer_allowed=False,
         )
     )
 
 
 class ReviewSkeletonResponseSchema(BaseModel):
     review_skeleton: ReviewSkeletonQuestionsAndRecommendation = Field(
-        default=ReviewSkeletonQuestionsAndRecommendation())
+        default=ReviewSkeletonQuestionsAndRecommendation()
+    )
 
 
 class ReviewSkeletonRequestSchema(BaseModel):

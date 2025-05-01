@@ -15,21 +15,23 @@ from app.services.works.works_service import WorksService
 
 class Works:
     async def __call__(
-            self,
-            event_notification_service: EventsNotificationServiceDep,
-            _: UserDep,
-            caller_id: CallerIdDep,
-            event_id: UUID,
-            events_configuration_service: EventsConfigurationServiceDep,
-            inscription_service: EventInscriptionsServiceDep,
-            works_repository: WorksRepository = Depends(get_repository(WorksRepository)),
+        self,
+        event_notification_service: EventsNotificationServiceDep,
+        _: UserDep,
+        caller_id: CallerIdDep,
+        event_id: UUID,
+        events_configuration_service: EventsConfigurationServiceDep,
+        inscription_service: EventInscriptionsServiceDep,
+        works_repository: Annotated[WorksRepository, Depends(get_repository(WorksRepository))],
     ) -> WorksService:
-        return WorksService(caller_id,
-                            event_id,
-                            events_configuration_service,
-                            event_notification_service,
-                            inscription_service,
-                            works_repository)
+        return WorksService(
+            caller_id,
+            event_id,
+            events_configuration_service,
+            event_notification_service,
+            inscription_service,
+            works_repository,
+        )
 
 
 auth_works_service = Works()

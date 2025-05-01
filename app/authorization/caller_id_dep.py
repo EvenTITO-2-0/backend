@@ -1,5 +1,6 @@
 from typing import Annotated
-from fastapi import Header, Depends
+
+from fastapi import Depends, Header
 
 from app.schemas.users.utils import UID
 

@@ -1,8 +1,7 @@
 from fastapi import APIRouter
 
-
 echo_router = APIRouter(
-    prefix='/echo',
+    prefix="/echo",
     tags=["Echo"],
 )
 

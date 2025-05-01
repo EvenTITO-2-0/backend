@@ -1,31 +1,20 @@
-version: '3.9'
 services:
   backend:
-    image: backend:latest
-    environment:
-      - RUN_MODE=DEV
-      - PORT=8080
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/
-      - GCP_CREDENTIALS=${GCP_CREDENTIALS}
-      - EVENTS_BUCKET=${EVENTS_BUCKET}
-      - WORKS_BUCKET=${WORKS_BUCKET}
-      - CERTIFICATES_BUCKET=${CERTIFICATES_BUCKET}
-      - USERS_BUCKET=${USERS_BUCKET}
-      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL}
-      - TYPE_STORAGE=${TYPE_STORAGE}
-      - NOTIFICATIONS_EMAIL_PASSWORD=${NOTIFICATIONS_EMAIL_PASSWORD}
-      - NOTIFICATIONS_EMAIL=${NOTIFICATIONS_EMAIL}
-      - NOTIFICATIONS_ENABLE_SEND_EMAILS=${NOTIFICATIONS_ENABLE_SEND_EMAILS}
-      - NOTIFICATIONS_FRONTEND_URL=${NOTIFICATIONS_FRONTEND_URL}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      # The .env file takes precedence. If some variable is not set,
+      # the .env.example file is used for the missing variables.
+      - .env
+      - .env.example
     volumes:
-      - ./app:/code/app
-      - ./tests:/code/tests
-      - ./assets:/code/assets
-      - ./requirements-dev.txt:/code/requirements-dev.txt
+      - .:/code
     ports:
       - "8080:8080"
+      - "5678:5678"  # Debug port
     command: uvicorn app.main:app --host=0.0.0.0 --port=8080 --reload
-
     restart: on-failure
     networks:
       - eventito-dev-network

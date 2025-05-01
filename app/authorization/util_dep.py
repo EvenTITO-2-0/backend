@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Depends
+from fastapi import Depends, HTTPException
 
 
 def verify_or_dep(deps: list[bool]):
@@ -30,11 +30,7 @@ def verify_or4(first, second, third, fourth):
 
 def verify_or5(first, second, third, fourth, fifth):
     async def verify(
-            first_dep: first,
-            second_dep: second,
-            third_dep: third,
-            fourth_dep: fourth,
-            fifth_dep: fifth
+        first_dep: first, second_dep: second, third_dep: third, fourth_dep: fourth, fifth_dep: fifth
     ) -> None:
         return verify_or_dep([first_dep, second_dep, third_dep, fourth_dep, fifth_dep])
 

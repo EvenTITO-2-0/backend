@@ -2,13 +2,27 @@ from uuid import UUID
 
 from app.database.models.event import EventStatus
 from app.database.models.inscription import InscriptionModel
-from app.exceptions.inscriptions_exceptions import EventNotStarted, InscriptionNotFound, InscriptionAlreadyExists, \
-    MyInscriptionNotFound
+from app.exceptions.inscriptions_exceptions import (
+    EventNotStarted,
+    InscriptionAlreadyExists,
+    InscriptionNotFound,
+    MyInscriptionNotFound,
+)
 from app.repository.inscriptions_repository import InscriptionsRepository
-from app.schemas.inscriptions.inscription import InscriptionRequestSchema, InscriptionResponseSchema, \
-    InscriptionUploadSchema, InscriptionDownloadSchema, InscriptionStatusSchema, InscriptionUserResponseSchema
-from app.schemas.payments.payment import PaymentRequestSchema, PaymentUploadSchema, PaymentsResponseSchema, \
-    PaymentDownloadSchema
+from app.schemas.inscriptions.inscription import (
+    InscriptionDownloadSchema,
+    InscriptionRequestSchema,
+    InscriptionResponseSchema,
+    InscriptionStatusSchema,
+    InscriptionUploadSchema,
+    InscriptionUserResponseSchema,
+)
+from app.schemas.payments.payment import (
+    PaymentDownloadSchema,
+    PaymentRequestSchema,
+    PaymentsResponseSchema,
+    PaymentUploadSchema,
+)
 from app.schemas.users.utils import UID
 from app.services.event_payments.event_payments_service import EventPaymentsService
 from app.services.events.events_configuration_service import EventsConfigurationService
@@ -19,14 +33,14 @@ from app.services.storage.event_inscription_storage_service import EventInscript
 
 class EventInscriptionsService(BaseService):
     def __init__(
-            self,
-            events_configuration_service: EventsConfigurationService,
-            events_payment_service: EventPaymentsService,
-            storage_service: EventInscriptionStorageService,
-            inscriptions_repository: InscriptionsRepository,
-            event_notification_service: EventsNotificationsService,
-            event_id: UUID,
-            user_id: UID
+        self,
+        events_configuration_service: EventsConfigurationService,
+        events_payment_service: EventPaymentsService,
+        storage_service: EventInscriptionStorageService,
+        inscriptions_repository: InscriptionsRepository,
+        event_notification_service: EventsNotificationsService,
+        event_id: UUID,
+        user_id: UID,
     ):
         self.events_configuration_service = events_configuration_service
         self.events_payment_service = events_payment_service
@@ -56,14 +70,10 @@ class EventInscriptionsService(BaseService):
         return response
 
     async def update_inscription(
-            self,
-            inscription_id: UUID,
-            inscription_update: InscriptionRequestSchema
+        self, inscription_id: UUID, inscription_update: InscriptionRequestSchema
     ) -> InscriptionUploadSchema:
         my_inscription = await self.inscriptions_repository.get_user_inscription_by_id(
-            self.user_id,
-            self.event_id,
-            inscription_id
+            self.user_id, self.event_id, inscription_id
         )
         if my_inscription is None:
             raise InscriptionNotFound(self.event_id, inscription_id)
@@ -102,9 +112,7 @@ class EventInscriptionsService(BaseService):
 
     async def pay(self, inscription_id: UUID, payment_request: PaymentRequestSchema) -> PaymentUploadSchema:
         my_inscription = await self.inscriptions_repository.get_user_inscription_by_id(
-            self.user_id,
-            self.event_id,
-            inscription_id
+            self.user_id, self.event_id, inscription_id
         )
         if my_inscription is None:
             raise InscriptionNotFound(self.event_id, inscription_id)
@@ -120,17 +128,12 @@ class EventInscriptionsService(BaseService):
 
     async def is_my_inscription(self, inscription_id: UUID) -> bool:
         my_inscription = await self.inscriptions_repository.get_user_inscription_by_id(
-            self.user_id,
-            self.event_id,
-            inscription_id
+            self.user_id, self.event_id, inscription_id
         )
         return my_inscription is not None
 
     async def get_inscription_payments(
-            self,
-            inscription_id: UUID,
-            offset: int,
-            limit: int
+        self, inscription_id: UUID, offset: int, limit: int
     ) -> list[PaymentsResponseSchema]:
         return await self.events_payment_service.get_inscription_payments(inscription_id, offset, limit)
 
@@ -158,7 +161,6 @@ class EventInscriptionsService(BaseService):
             roles=model.roles,
             affiliation=model.affiliation,
             user=InscriptionUserResponseSchema(
-                fullname=model.user.name + " " + model.user.lastname,
-                email=model.user.email
-            )
+                fullname=model.user.name + " " + model.user.lastname, email=model.user.email
+            ),
         )

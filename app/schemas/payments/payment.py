@@ -1,10 +1,10 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import ConfigDict, Field, BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.database.models.payment import PaymentStatus
-from app.schemas.storage.schemas import UploadURLSchema, DownloadURLSchema
+from app.schemas.storage.schemas import DownloadURLSchema, UploadURLSchema
 
 
 class PaymentIdSchema(BaseModel):

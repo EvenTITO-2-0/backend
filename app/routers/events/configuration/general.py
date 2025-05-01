@@ -17,20 +17,17 @@ general_configuration_router = APIRouter(prefix="/general")
     dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)],
 )
 async def update_general_event(
-        event_modification: ConfigurationGeneralEventSchema,
-        events_configuration_service: EventsConfigurationServiceDep,
+    event_modification: ConfigurationGeneralEventSchema,
+    events_configuration_service: EventsConfigurationServiceDep,
 ) -> None:
     await events_configuration_service.update_general(event_modification)
 
 
 @general_configuration_router.put(
-    path="/tracks",
-    status_code=204,
-    response_model=None,
-    dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)]
+    path="/tracks", status_code=204, response_model=None, dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)]
 )
 async def update_event_tracks(
-        tracks_schema: DynamicTracksEventSchema,
-        events_configuration_service: EventsConfigurationServiceDep,
+    tracks_schema: DynamicTracksEventSchema,
+    events_configuration_service: EventsConfigurationServiceDep,
 ):
     await events_configuration_service.update_tracks(tracks_schema)

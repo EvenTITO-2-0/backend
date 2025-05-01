@@ -20,7 +20,7 @@ events_configuration_router.include_router(review_skeleton_configuration_router)
 
 @events_configuration_router.get("", dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)])
 async def get_event_configuration(
-        events_configuration_service: EventsConfigurationServiceDep
+    events_configuration_service: EventsConfigurationServiceDep,
 ) -> EventConfigurationSchema:
     event = await events_configuration_service.get_configuration()
     return event

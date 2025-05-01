@@ -1,5 +1,21 @@
-pytest
-pytest-cov
+# Testing
+pytest==8.3.5
+pytest-cov==6.0.0
+pytest-mock==3.14.0
 httpx
 freezegun
-pytest-mock==3.14.0
+
+# Formatting
+isort==5.13.2
+
+# Type checking
+mypy==1.15.0
+mypy-extensions==1.0.0
+
+# Linting
+ruff==0.5.3
+
+# Core dependencies versions (to match container exactly)
+pydantic==2.11.1
+pydantic-settings==2.8.1
+pydantic_core==2.33.0

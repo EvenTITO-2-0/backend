@@ -1,4 +1,5 @@
 from enum import Enum
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,10 +20,10 @@ class StorageSettings(BaseSettings):
 
 # TODO: Validar que si ENABLE_SEND_EMAILS==True, entonces lo otro este setteado.
 class NotificationsSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix='NOTIFICATIONS_')
+    model_config = SettingsConfigDict(env_prefix="NOTIFICATIONS_")
     EMAIL: str | None = None
     EMAIL_PASSWORD: str | None = None
-    FRONTEND_URL: str = ''
+    FRONTEND_URL: str = ""
     ENABLE_SEND_EMAILS: bool = False
     SMTPS_PORT: int = 465
 

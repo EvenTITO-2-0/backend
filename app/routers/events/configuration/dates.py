@@ -10,13 +10,10 @@ dates_configuration_router = APIRouter(prefix="/dates")
 
 
 @dates_configuration_router.put(
-    path="",
-    status_code=204,
-    response_model=None,
-    dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)]
+    path="", status_code=204, response_model=None, dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)]
 )
 async def update_dates_event(
-        dates_modification: DatesCompleteSchema,
-        events_configuration_service: EventsConfigurationServiceDep,
+    dates_modification: DatesCompleteSchema,
+    events_configuration_service: EventsConfigurationServiceDep,
 ):
     await events_configuration_service.update_dates(dates_modification)

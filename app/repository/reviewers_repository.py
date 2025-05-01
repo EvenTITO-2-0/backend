@@ -1,15 +1,19 @@
 from uuid import UUID
 
-from sqlalchemy import select, func, and_, exists
-from sqlalchemy import update
+from sqlalchemy import and_, exists, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.database.models.reviewer import ReviewerModel
 from app.database.models.user import UserModel
 from app.repository.members_repository import MemberRepository
-from app.schemas.members.reviewer_schema import ReviewerWithWorksResponseSchema, ReviewerResponseSchema, \
-    ReviewerWithWorksDeadlineResponseSchema, ReviewerAssignmentWithWorkSchema, ReviewerUpdateRequestSchema
+from app.schemas.members.reviewer_schema import (
+    ReviewerAssignmentWithWorkSchema,
+    ReviewerResponseSchema,
+    ReviewerUpdateRequestSchema,
+    ReviewerWithWorksDeadlineResponseSchema,
+    ReviewerWithWorksResponseSchema,
+)
 from app.schemas.users.utils import UID
 from app.schemas.works.work import WorkWithState
 
@@ -23,22 +27,20 @@ class ReviewerRepository(MemberRepository):
         return [
             ReviewerModel.event_id == event_id,
             ReviewerModel.user_id == reviewer_id,
-            ReviewerModel.work_id == work_id
+            ReviewerModel.work_id == work_id,
         ]
 
     async def is_reviewer_of_work_in_event(self, event_id: UUID, user_id: UID, work_id: UUID) -> bool:
         return await self.exists((event_id, user_id, work_id))
 
     async def is_reviewer_in_event(self, event_id: UUID, user_id: UID) -> bool:
-        query = (
-            select(exists().where(and_(ReviewerModel.event_id == event_id, ReviewerModel.user_id == user_id)))
-        )
+        query = select(exists().where(and_(ReviewerModel.event_id == event_id, ReviewerModel.user_id == user_id)))
         result = await self.session.execute(query)
         return result.scalar()
 
-    async def get_all_reviewers(self, event_id: UUID, work_id: UUID | None) \
-            -> list[ReviewerWithWorksDeadlineResponseSchema]:
-
+    async def get_all_reviewers(
+        self, event_id: UUID, work_id: UUID | None
+    ) -> list[ReviewerWithWorksDeadlineResponseSchema]:
         filters = [ReviewerModel.event_id == event_id]
         if work_id is not None:
             filters.append(ReviewerModel.work_id == work_id)
@@ -49,10 +51,9 @@ class ReviewerRepository(MemberRepository):
                 UserModel,
                 func.json_agg(
                     func.json_build_object(
-                        'work_id', ReviewerModel.work_id,
-                        'review_deadline', ReviewerModel.review_deadline
+                        "work_id", ReviewerModel.work_id, "review_deadline", ReviewerModel.review_deadline
                     )
-                ).label('works')
+                ).label("works"),
             )
             .join(UserModel, ReviewerModel.user_id == UserModel.id)
             .filter(and_(*filters))
@@ -63,38 +64,30 @@ class ReviewerRepository(MemberRepository):
         res = result.fetchall()
         return [
             ReviewerWithWorksDeadlineResponseSchema(
-                event_id=row.event_id,
-                user_id=row.user_id,
-                user=row.UserModel,
-                works=row.works
-            ) for row in res]
+                event_id=row.event_id, user_id=row.user_id, user=row.UserModel, works=row.works
+            )
+            for row in res
+        ]
 
     async def get_reviewer_by_user_id(self, event_id: UUID, user_id: UID) -> ReviewerWithWorksResponseSchema:
         group_by_subquery = (
             select(
                 ReviewerModel.event_id,
                 ReviewerModel.user_id,
-                func.array_agg(ReviewerModel.work_id).label('work_ids'),
+                func.array_agg(ReviewerModel.work_id).label("work_ids"),
             )
             .where(and_(ReviewerModel.event_id == event_id, ReviewerModel.user_id == user_id))
             .group_by(ReviewerModel.event_id, ReviewerModel.user_id)
-        )
+        ).subquery()
 
-        group_by_subquery = group_by_subquery.subquery()
-
-        query = (
-            select(
-                group_by_subquery.c.event_id,
-                group_by_subquery.c.user_id,
-                group_by_subquery.c.work_ids,
-                UserModel
-            )
-            .join(UserModel, group_by_subquery.c.user_id == UserModel.id)
-        )
+        query = select(
+            group_by_subquery.c.event_id, group_by_subquery.c.user_id, group_by_subquery.c.work_ids, UserModel
+        ).join(UserModel, group_by_subquery.c.user_id == UserModel.id)
         result = await self.session.execute(query)
         res = result.fetchone()
         return ReviewerWithWorksResponseSchema(
-            event_id=res.event_id, work_ids=res.work_ids, user_id=res.user_id, user=res.UserModel)
+            event_id=res.event_id, work_ids=res.work_ids, user_id=res.user_id, user=res.UserModel
+        )
 
     async def get_reviewer_by_work_id(self, event_id: UUID, user_id: UID, work_id: UUID) -> ReviewerResponseSchema:
         query = select(UserModel, self.model).where(
@@ -102,7 +95,7 @@ class ReviewerRepository(MemberRepository):
                 self.model.event_id == event_id,
                 self.model.user_id == user_id,
                 self.model.work_id == work_id,
-                self.model.user_id == UserModel.id
+                self.model.user_id == UserModel.id,
             )
         )
         result = await self.session.execute(query)
@@ -112,7 +105,7 @@ class ReviewerRepository(MemberRepository):
             work_id=model.work_id,
             user_id=model.user_id,
             review_deadline=model.review_deadline,
-            user=user
+            user=user,
         )
 
     async def create_reviewers(self, event_id: UUID, reviewers) -> None:
@@ -130,24 +123,24 @@ class ReviewerRepository(MemberRepository):
         conditions = [
             ReviewerModel.event_id == event_id,
             ReviewerModel.user_id == update_schema.user_id,
-            ReviewerModel.work_id == update_schema.work_id
+            ReviewerModel.work_id == update_schema.work_id,
         ]
         query = update(self.model).where(and_(*conditions)).values(review_deadline=update_schema.review_deadline)
         await self.session.execute(query)
         await self.session.commit()
 
     async def get_assignments(self, event_id: UUID, user_id: UID):
-        query = select(ReviewerModel).options(joinedload(ReviewerModel.work)).where(
-            and_(
-                ReviewerModel.event_id == event_id,
-                ReviewerModel.user_id == user_id
-            )
+        query = (
+            select(ReviewerModel)
+            .options(joinedload(ReviewerModel.work))
+            .where(and_(ReviewerModel.event_id == event_id, ReviewerModel.user_id == user_id))
         )
 
         result = await self.session.execute(query)
         res = result.scalars().all()
-        return [ReviewerAssignmentWithWorkSchema(
-            work_id=row.work_id,
-            review_deadline=row.review_deadline,
-            work=WorkWithState(**row.work.__dict__)
-        ) for row in res]
+        return [
+            ReviewerAssignmentWithWorkSchema(
+                work_id=row.work_id, review_deadline=row.review_deadline, work=WorkWithState(**row.work.__dict__)
+            )
+            for row in res
+        ]

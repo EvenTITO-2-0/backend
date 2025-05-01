@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import HTTPException, Depends
+from fastapi import Depends, HTTPException
 
 from app.authorization.user_id_dep import UserDep
 from app.database.models.user import UserRole

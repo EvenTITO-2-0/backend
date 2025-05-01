@@ -43,23 +43,17 @@ class EventsRepository(Repository):
         return await self._exists_with_conditions(conditions)
 
     async def create(self, creator_id, event_create):
-        new_event = EventModel(
-            **event_create.model_dump(mode='json'),
-            creator_id=creator_id
-        )
+        new_event = EventModel(**event_create.model_dump(mode="json"), creator_id=creator_id)
         OrganizerModel(
             event=new_event,
             user_id=new_event.creator_id,
         )
         return await self._create(new_event)
 
-    async def _check_role_exists(self, model, event_id: UUID, user_id: UUID) -> bool:
-        return await self._exists_with_conditions([
-            model.event_id == event_id,
-            model.user_id == user_id
-        ])
+    async def _check_role_exists(self, model, event_id: UUID, user_id: UID) -> bool:
+        return await self._exists_with_conditions([model.event_id == event_id, model.user_id == user_id])
 
-    async def get_roles(self, event_id: UUID, user_id: UUID) -> list[EventRole]:
+    async def get_roles(self, event_id: UUID, user_id: UID) -> list[EventRole]:
         roles = []
         if await self._check_role_exists(OrganizerModel, event_id, user_id):
             roles.append(EventRole.ORGANIZER)
@@ -69,10 +63,8 @@ class EventsRepository(Repository):
             roles.append(EventRole.REVIEWER)
 
         inscription = await self.session.execute(
-            select(InscriptionModel.roles)
-            .where(
-                (InscriptionModel.event_id == event_id) &
-                (InscriptionModel.user_id == user_id)
+            select(InscriptionModel.roles).where(
+                (InscriptionModel.event_id == event_id) & (InscriptionModel.user_id == user_id)
             )
         )
         inscription_roles = inscription.scalar_one_or_none()
@@ -82,36 +74,41 @@ class EventsRepository(Repository):
 
     async def get_all_events_for_user(self, user_id: UID, offset: int, limit: int) -> list[PublicEventWithRolesSchema]:
         event_ids_subquery = (
-            select(EventModel.id, EventModel.creation_date).distinct()
+            select(EventModel.id, EventModel.creation_date)
+            .distinct()
             .outerjoin(InscriptionModel, InscriptionModel.event_id == EventModel.id)
             .outerjoin(OrganizerModel, OrganizerModel.event_id == EventModel.id)
             .outerjoin(ChairModel, ChairModel.event_id == EventModel.id)
             .outerjoin(ReviewerModel, ReviewerModel.event_id == EventModel.id)
             .where(
-                (InscriptionModel.user_id == user_id) |
-                (OrganizerModel.user_id == user_id) |
-                (ChairModel.user_id == user_id) |
-                (ReviewerModel.user_id == user_id)
+                (InscriptionModel.user_id == user_id)
+                | (OrganizerModel.user_id == user_id)
+                | (ChairModel.user_id == user_id)
+                | (ReviewerModel.user_id == user_id)
             )
             .offset(offset)
             .limit(limit)
             .order_by(EventModel.creation_date.desc())
         ).subquery()
 
-        query = (
-            select(
-                EventModel,
-                select(InscriptionModel.roles).where((InscriptionModel.event_id == EventModel.id) & (
-                    InscriptionModel.user_id == user_id)).label('inscription_roles'),
-                select(1).where((OrganizerModel.event_id == EventModel.id) & (
-                    OrganizerModel.user_id == user_id)).exists().label('is_organizer'),
-                select(1).where((ChairModel.event_id == EventModel.id) & (
-                    ChairModel.user_id == user_id)).exists().label('is_chair'),
-                select(1).where((ReviewerModel.event_id == EventModel.id) & (
-                    ReviewerModel.user_id == user_id)).exists().label('is_reviewer')
-            )
-            .join(event_ids_subquery, EventModel.id == event_ids_subquery.c.id)
-        )
+        query = select(
+            EventModel,
+            select(InscriptionModel.roles)
+            .where((InscriptionModel.event_id == EventModel.id) & (InscriptionModel.user_id == user_id))
+            .label("inscription_roles"),
+            select(1)
+            .where((OrganizerModel.event_id == EventModel.id) & (OrganizerModel.user_id == user_id))
+            .exists()
+            .label("is_organizer"),
+            select(1)
+            .where((ChairModel.event_id == EventModel.id) & (ChairModel.user_id == user_id))
+            .exists()
+            .label("is_chair"),
+            select(1)
+            .where((ReviewerModel.event_id == EventModel.id) & (ReviewerModel.user_id == user_id))
+            .exists()
+            .label("is_reviewer"),
+        ).join(event_ids_subquery, EventModel.id == event_ids_subquery.c.id)
 
         result = await self.session.execute(query)
         events_with_roles = result.all()
@@ -127,27 +124,26 @@ class EventsRepository(Repository):
                 tracks=event.tracks,
                 status=event.status,
                 roles=[
-                    role for role, is_role in [
+                    role
+                    for role, is_role in [
                         (EventRole.ORGANIZER, is_organizer),
                         (EventRole.CHAIR, is_chair),
-                        (EventRole.REVIEWER, is_reviewer)
-                    ] if is_role
-                ] + ([EventRole(role) for role in inscription_roles] if inscription_roles else [])
+                        (EventRole.REVIEWER, is_reviewer),
+                    ]
+                    if is_role
+                ]
+                + ([EventRole(role) for role in inscription_roles] if inscription_roles else []),
             )
             for event, inscription_roles, is_organizer, is_chair, is_reviewer in events_with_roles
         ]
 
     async def get_all_events(
-            self,
-            offset: int,
-            limit: int,
-            status: EventStatus | None,
-            title_search: str | None
+        self, offset: int, limit: int, status: EventStatus | None, title_search: str | None
     ) -> list[EventModel]:
         query = select(EventModel).offset(offset).limit(limit)
         if status is not None:
             query = query.where(EventModel.status == status)
         if title_search is not None:
-            query = query.filter(EventModel.title.ilike(f'%{title_search}%'))
+            query = query.filter(EventModel.title.ilike(f"%{title_search}%"))
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())

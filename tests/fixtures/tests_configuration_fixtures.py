@@ -1,5 +1,5 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from app.database.database import SessionLocal, engine
 from app.database.models.base import Base
@@ -11,7 +11,7 @@ from app.main import app
 
 @pytest.fixture(scope="session")
 def anyio_backend():
-    return 'asyncio'
+    return "asyncio"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -54,6 +54,5 @@ async def session_override(connection, transaction):
 
 @pytest.fixture(scope="function")
 async def client(session_override):
-    async with AsyncClient(transport=ASGITransport(app=app),
-                           base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
