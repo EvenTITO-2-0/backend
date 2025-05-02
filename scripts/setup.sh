@@ -72,7 +72,8 @@ fi
 
 # Run database setup
 echo "Running database setup..."
-python3.11 scripts/database_setup.py
+docker compose -f docker-compose-dev.yaml up -d postgres && echo "Waiting for postgres to be ready..." && sleep 10
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/ python3.11 scripts/database_setup.py
 
 echo "Local setup complete! You can now:"
 echo "1. Use 'source .venv/bin/activate' to activate the virtual environment"
