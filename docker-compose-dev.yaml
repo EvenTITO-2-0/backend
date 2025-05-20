@@ -12,10 +12,8 @@ services:
     volumes:
       - .:/code
     ports:
-      - "8080:8080"
       - "5678:5678"  # Debug port
     command: uvicorn app.main:app --host=0.0.0.0 --port=8080 --reload
-    restart: on-failure
     networks:
       - eventito-dev-network
     depends_on:
@@ -24,7 +22,6 @@ services:
 
   postgres:
     image: postgres:14
-    restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -42,6 +39,35 @@ services:
       timeout: 5s
       retries: 5
 
+  gateway:
+    image: gateway:latest
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
+    environment:
+      - PORT=12345
+      - BACKEND_URL=http://backend:8080
+      - FIREBASE_KEY=${FIREBASE_KEY}
+    volumes:
+      - ../gateway:/usr/src/app
+    ports:
+      - "12346:12345"
+    working_dir: /usr/src/app
+    networks:
+      - eventito-dev-network
+  client:
+    build:
+      context: ../eventito-frontend
+      dockerfile: Dockerfile
+    image: client:dev
+    command: npm run dev -- --host
+    volumes:
+      - ../eventito-frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - eventito-dev-network
 networks:
   eventito-dev-network:
     name: eventito-dev-network
