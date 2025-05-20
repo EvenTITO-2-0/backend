@@ -72,3 +72,17 @@ help:
 	@echo "  check           - Run all checks (format, type check, test)"
 	@echo "  install         - Install local dependencies"
 	@echo "  help            - Show this help message"
+
+docker-compose-up:
+	docker compose -f docker-compose-dev.yaml build
+	docker compose up -d
+.PHONY: docker-compose-up
+
+docker-compose-down:
+	docker compose -f docker-compose-dev.yaml stop -t 1
+	docker compose -f docker-compose-dev.yaml down
+.PHONY: docker-compose-down
+
+docker-compose-logs:
+	docker compose -f docker-compose-dev.yaml logs -f
+.PHONY: docker-compose-logs
