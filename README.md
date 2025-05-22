@@ -128,7 +128,35 @@ Available snippets (trigger them by typing):
    ```bash
    make check
    ```
-
+### Compose workflow
+1. Build and start all containers
+   ```bash
+    make docker-compose-up
+   ```
+2. Stop all containers
+   ```bash
+    make docker-compose-down
+   ```
+3. View logs for all active containers
+   ```bash
+    make docker-compose-logs
+   ```
+4. Build and restart backend
+   ```bash
+    make docker-compose-backend
+   ```
+5. Build and restart frontend
+   ```bash
+    make docker-compose-frontend
+   ```
+6. Build and restart PostgreSQL database
+   ```bash
+    make docker-compose-postgres
+    ```
+7. Build and restart gateway component
+   ```bash
+    make docker-compose-gateway
+    ```
 ## Code Style
 
 This project uses:
