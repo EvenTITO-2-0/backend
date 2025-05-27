@@ -72,3 +72,37 @@ help:
 	@echo "  check           - Run all checks (format, type check, test)"
 	@echo "  install         - Install local dependencies"
 	@echo "  help            - Show this help message"
+
+docker-compose-up:
+	docker compose -f docker-compose-dev.yaml build
+	docker compose -f docker-compose-dev.yaml up -d
+.PHONY: docker-compose-up
+
+docker-compose-down:
+	docker compose -f docker-compose-dev.yaml stop -t 1
+	docker compose -f docker-compose-dev.yaml down
+.PHONY: docker-compose-down
+
+docker-compose-logs:
+	docker compose -f docker-compose-dev.yaml logs -f
+.PHONY: docker-compose-logs
+
+docker-compose-frontend:
+	docker compose -f docker-compose-dev.yaml  build client
+	docker compose -f docker-compose-dev.yaml  up -d client
+.PHONY: docker-compose-frontend
+
+docker-compose-backend:
+	docker compose -f docker-compose-dev.yaml  build backend
+	docker compose -f docker-compose-dev.yaml  up -d backend
+.PHONY: docker-compose-backend
+
+docker-compose-postgres:
+	docker compose -f docker-compose-dev.yaml  build postgres
+	docker compose -f docker-compose-dev.yaml  up -d postgres
+.PHONY: docker-compose-postgres
+
+docker-compose-gateway:
+	docker compose -f docker-compose-dev.yaml  build gateway
+	docker compose -f docker-compose-dev.yaml  up -d gateway
+.PHONY: docker-compose-gateway
