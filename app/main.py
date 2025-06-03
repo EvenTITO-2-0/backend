@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.events.events import events_router
 from app.routers.users.users import users_router
+from app.routers.events.payments.provider import provider_router
 
 app = FastAPI(
     title="Backend API",
@@ -37,3 +38,4 @@ app.add_middleware(
 
 app.include_router(users_router)
 app.include_router(events_router)
+events_router.include_router(provider_router, prefix="/{event_id}/payments")

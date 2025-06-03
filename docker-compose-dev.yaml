@@ -57,12 +57,12 @@ services:
       - eventito-dev-network
   client:
     build:
-      context: ../eventito-frontend
+      context: ../frontend
       dockerfile: Dockerfile
     image: client:dev
     command: npm run dev -- --host
     volumes:
-      - ../eventito-frontend:/app
+      - ../frontend:/app
       - /app/node_modules
     ports:
       - "5173:5173"

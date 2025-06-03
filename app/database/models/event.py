@@ -46,3 +46,5 @@ class EventModel(ModelTemplate, Base):
 
     organizers = relationship("OrganizerModel", back_populates="event")
     creator = relationship("UserModel", back_populates="events", lazy=False)
+    provider_account_id = Column(UIDType, ForeignKey("provider_accounts.id"), nullable=True)
+    payment_provider = relationship("ProviderAccountModel", back_populates="events")

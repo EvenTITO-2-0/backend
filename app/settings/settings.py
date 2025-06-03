@@ -18,6 +18,14 @@ class StorageSettings(BaseSettings):
     GCP_CREDENTIALS: str | None = None
 
 
+class MercadoPagoSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="MERCADOPAGO_")
+    PUBLIC_KEY: str | None = None
+    ACCESS_TOKEN: str | None = None
+    WEBHOOK_SECRET: str | None = None
+    FRONTEND_URL: str = "http://localhost:5173"
+
+
 # TODO: Validar que si ENABLE_SEND_EMAILS==True, entonces lo otro este setteado.
 class NotificationsSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="NOTIFICATIONS_")
@@ -30,3 +38,14 @@ class NotificationsSettings(BaseSettings):
 
 class DatabaseSettings(BaseSettings):
     DATABASE_URL: str
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    DATABASE: DatabaseSettings = DatabaseSettings()
+    STORAGE: StorageSettings = StorageSettings()
+    NOTIFICATIONS: NotificationsSettings = NotificationsSettings()
+    MERCADOPAGO: MercadoPagoSettings = MercadoPagoSettings()
+
+
+settings = Settings()
