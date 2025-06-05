@@ -22,6 +22,7 @@ from app.database.models.inscription import InscriptionModel
 from app.database.models.event import EventModel
 from app.database.models.user import UserModel
 from app.database.models.chair import ChairModel
+from app.database.models.provider_account import ProviderAccountModel
 import asyncio
 from app.schemas.users.user import UserReply
 from app.repository.users_repository import UsersRepository

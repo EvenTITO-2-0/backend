@@ -12,7 +12,7 @@ def is_valid_date_and_time(date, time=None):
     _now = now_datetime()
     if time:
         return date > _now.date() or (date == _now.date() and time > _now.time())
-    return date < _now.date()
+    return date > _now.date()
 
 
 def is_valid_datetime(_datetime):

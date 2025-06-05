@@ -17,7 +17,7 @@ create table public.users
 );
 
 alter table public.users
-    owner to neondb_owner;
+    owner to postgres;
 
 create table public.events
 (
@@ -45,7 +45,7 @@ create table public.events
 );
 
 alter table public.events
-    owner to neondb_owner;
+    owner to postgres;
 
 create table public.chairs
 (
@@ -60,7 +60,7 @@ create table public.chairs
 );
 
 alter table public.chairs
-    owner to neondb_owner;
+    owner to postgres;
 
 create table public.inscriptions
 (
@@ -78,7 +78,7 @@ create table public.inscriptions
 );
 
 alter table public.inscriptions
-    owner to neondb_owner;
+    owner to postgres;
 
 create index ix_inscription_event_id
     on public.inscriptions (event_id);
@@ -98,7 +98,7 @@ create table public.organizers
 );
 
 alter table public.organizers
-    owner to neondb_owner;
+    owner to postgres;
 
 create table public.works
 (
@@ -123,7 +123,7 @@ create table public.works
 );
 
 alter table public.works
-    owner to neondb_owner;
+    owner to postgres;
 
 create table public.reviewers
 (
@@ -140,7 +140,7 @@ create table public.reviewers
 );
 
 alter table public.reviewers
-    owner to neondb_owner;
+    owner to postgres;
 
 create table public.payments
 (
@@ -158,7 +158,7 @@ create table public.payments
 );
 
 alter table public.payments
-    owner to neondb_owner;
+    owner to postgres;
 
 create index ix_payment_inscription_id
     on public.payments (inscription_id);
@@ -180,7 +180,7 @@ create table public.submissions
 );
 
 alter table public.submissions
-    owner to neondb_owner;
+    owner to postgres;
 
 create index ix_submission_event_id
     on public.submissions (event_id);
@@ -208,4 +208,4 @@ create table public.reviews
 );
 
 alter table public.reviews
-    owner to neondb_owner;
+    owner to postgres;

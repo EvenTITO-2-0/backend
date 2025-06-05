@@ -18,7 +18,7 @@ from app.schemas.inscriptions.inscription import (
 from app.schemas.payments.payment import (
     PaymentDownloadSchema,
     PaymentRequestSchema,
-    PaymentsResponseSchema,
+    PaymentResponseSchema,
     PaymentUploadSchema,
 )
 from app.services.event_inscriptions.event_inscriptions_service_dep import EventInscriptionsServiceDep
@@ -110,7 +110,7 @@ async def pay_inscription(
 @inscriptions_events_router.get(
     path="/{inscription_id}/payments",
     status_code=200,
-    response_model=List[PaymentsResponseSchema],
+    response_model=List[PaymentResponseSchema],
     dependencies=[or_(IsOrganizerDep, IsRegisteredDep)],
 )
 async def read_inscription_payments(
@@ -118,7 +118,7 @@ async def read_inscription_payments(
     inscription_service: EventInscriptionsServiceDep,
     offset: int = 0,
     limit: int = Query(default=100, le=100),
-) -> List[PaymentsResponseSchema]:
+) -> List[PaymentResponseSchema]:
     return await inscription_service.get_inscription_payments(inscription_id, offset, limit)
 
 
