@@ -36,6 +36,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+events_router.include_router(provider_router, prefix="/{event_id}")
 app.include_router(users_router)
 app.include_router(events_router)
-events_router.include_router(provider_router, prefix="/{event_id}/payments")

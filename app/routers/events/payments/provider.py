@@ -2,8 +2,9 @@ import hashlib
 import hmac
 import json
 from uuid import UUID
+import logging
 
-from fastapi import APIRouter, Request, Response, HTTPException, Depends
+from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path
 
 from app.authorization.inscripted_dep import IsRegisteredDep
 from app.authorization.organizer_dep import IsOrganizerDep
@@ -15,6 +16,8 @@ from app.settings.settings import MercadoPagoSettings
 
 settings = MercadoPagoSettings()
 provider_router = APIRouter(prefix="/provider")
+logger = logging.getLogger(__name__)
+
 
 @provider_router.post(
     "/link",
@@ -37,6 +40,7 @@ async def get_provider_status(
     event_id: UUID,
     provider_service: ProviderServiceDep
 ) -> ProviderAccountResponseSchema:
+    logger.info("Getting provider status")
     return await provider_service.get_account_status(event_id)
 
 @provider_router.post(

@@ -1,4 +1,5 @@
 # backend/app/services/provider/provider_service.py
+from logging import getLogger
 from uuid import UUID
 from app.services.services import BaseService
 from app.repository.provider_account_repository import ProviderAccountRepository
@@ -6,6 +7,8 @@ from app.repository.events_repository import EventsRepository
 from app.schemas.provider.provider import ProviderAccountSchema, ProviderAccountResponseSchema
 from app.exceptions.provider_exceptions import ProviderAccountNotFound, ProviderAccountAlreadyExists, InvalidProviderCredentials
 from mercadopago import SDK
+
+logger = getLogger(__name__)
 
 class ProviderService(BaseService):
     def __init__(
@@ -52,6 +55,7 @@ class ProviderService(BaseService):
         return ProviderAccountResponseSchema(**account.__dict__)
 
     async def get_account_status(self, event_id: UUID) -> ProviderAccountResponseSchema:
+        logger.info("Getting account status for event", extra={"event_id": str(event_id)})
         account = await self.provider_account_repository.get_by_event_id(event_id)
         if not account:
             raise ProviderAccountNotFound(event_id)
