@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.exceptions.payments_exceptions import PaymentNotFound
 from app.repository.payments_repository import PaymentsRepository
-from app.schemas.payments.payment import PaymentRequestSchema, PaymentsResponseSchema, PaymentStatusSchema
+from app.schemas.payments.payment import PaymentRequestSchema, PaymentResponseSchema, PaymentStatusSchema
 from app.schemas.users.utils import UID
 from app.services.services import BaseService
 from app.services.storage.event_inscription_storage_service import EventInscriptionStorageService
@@ -108,15 +108,15 @@ class EventPaymentsService(BaseService):
         # Actualizar el estado del pago
         await self.update_payment_status(UUID(payment_id), new_status)
 
-    async def get_inscription_payment(self, inscription_id: UUID, payment_id: UUID) -> PaymentsResponseSchema:
+    async def get_inscription_payment(self, inscription_id: UUID, payment_id: UUID) -> PaymentResponseSchema:
         return await self.payments_repository.get_payment(self.event_id, inscription_id, payment_id)
 
-    async def get_event_payments(self, offset: int, limit: int) -> list[PaymentsResponseSchema]:
+    async def get_event_payments(self, offset: int, limit: int) -> list[PaymentResponseSchema]:
         return await self.payments_repository.get_all_payments_for_event(self.event_id, offset, limit)
 
     async def get_inscription_payments(
         self, inscription_id: UUID, offset: int, limit: int
-    ) -> list[PaymentsResponseSchema]:
+    ) -> list[PaymentResponseSchema]:
         return await self.payments_repository.get_payments_for_inscription(self.event_id, inscription_id, offset, limit)
 
     async def update_payment_status(self, payment_id: UUID, new_status: PaymentStatusSchema) -> None:

@@ -2,8 +2,10 @@ from enum import Enum
 from sqlalchemy import Column, String, ForeignKey, Float
 from sqlalchemy.orm import relationship
 
-from app.database.models.base import Base, ModelTemplate
+from app.database.models.base import Base
 from app.database.models.user import UIDType
+from app.database.models.utils import ModelTemplate
+
 
 class ProviderAccountStatus(str, Enum):
     ACTIVE = "ACTIVE"

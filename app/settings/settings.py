@@ -38,14 +38,3 @@ class NotificationsSettings(BaseSettings):
 
 class DatabaseSettings(BaseSettings):
     DATABASE_URL: str
-
-
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-    DATABASE: DatabaseSettings = DatabaseSettings()
-    STORAGE: StorageSettings = StorageSettings()
-    NOTIFICATIONS: NotificationsSettings = NotificationsSettings()
-    MERCADOPAGO: MercadoPagoSettings = MercadoPagoSettings()
-
-
-settings = Settings()

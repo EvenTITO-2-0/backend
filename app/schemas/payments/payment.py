@@ -20,7 +20,6 @@ class PaymentRequestSchema(BaseModel):
     fare_name: str = Field(examples=["tarifa de speaker"])
     works: list[UUID] | None
 
-
 class PaymentStatusSchema(BaseModel):
     status: PaymentStatus = Field(examples=[PaymentStatus.APPROVED])
 
@@ -31,7 +30,7 @@ class PaymentWorkSchema(BaseModel):
     track: str = Field(examples=["Track"])
 
 
-class PaymentsResponseSchema(PaymentIdSchema, PaymentDatesResponseSchema):
+class PaymentResponseSchema(PaymentIdSchema, PaymentDatesResponseSchema):
     event_id: UUID
     inscription_id: UUID
     status: PaymentStatus
@@ -39,7 +38,7 @@ class PaymentsResponseSchema(PaymentIdSchema, PaymentDatesResponseSchema):
     works: list[PaymentWorkSchema] | None
 
 
-class PaymentDownloadSchema(PaymentsResponseSchema):
+class PaymentDownloadSchema(PaymentResponseSchema):
     model_config = ConfigDict(from_attributes=True)
     download_url: DownloadURLSchema | None = Field(default=None)
 

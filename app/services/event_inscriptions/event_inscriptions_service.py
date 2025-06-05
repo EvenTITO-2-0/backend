@@ -20,7 +20,7 @@ from app.schemas.inscriptions.inscription import (
 from app.schemas.payments.payment import (
     PaymentDownloadSchema,
     PaymentRequestSchema,
-    PaymentsResponseSchema,
+    PaymentResponseSchema,
     PaymentUploadSchema,
 )
 from app.schemas.users.utils import UID
@@ -134,7 +134,7 @@ class EventInscriptionsService(BaseService):
 
     async def get_inscription_payments(
         self, inscription_id: UUID, offset: int, limit: int
-    ) -> list[PaymentsResponseSchema]:
+    ) -> list[PaymentResponseSchema]:
         return await self.events_payment_service.get_inscription_payments(inscription_id, offset, limit)
 
     async def get_inscription_payment(self, inscription_id: UUID, payment_id: UUID) -> PaymentDownloadSchema:

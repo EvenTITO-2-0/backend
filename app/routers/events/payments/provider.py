@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Request, Response, HTTPException
-from uuid import UUID
-from app.authorization.organizer_dep import IsOrganizerDep
-from app.authorization.inscripted_dep import IsRegisteredDep
-from app.schemas.provider.provider import ProviderAccountSchema, ProviderAccountResponseSchema
-from app.schemas.payments.payment import PaymentRequestSchema, PaymentResponseSchema
-from app.services.provider.provider_service_dep import ProviderServiceDep
-from app.services.event_payments.event_payments_service_dep import EventPaymentsServiceDep
-from app.settings.settings import settings
-import hmac
 import hashlib
+import hmac
 import json
+from uuid import UUID
 
+from fastapi import APIRouter, Request, Response, HTTPException, Depends
+
+from app.authorization.inscripted_dep import IsRegisteredDep
+from app.authorization.organizer_dep import IsOrganizerDep
+from app.schemas.payments.payment import PaymentRequestSchema, PaymentResponseSchema
+from app.schemas.provider.provider import ProviderAccountSchema, ProviderAccountResponseSchema
+from app.services.event_payments.event_payments_service_dep import EventPaymentsServiceDep
+from app.services.provider.provider_service_dep import ProviderServiceDep
+from app.settings.settings import MercadoPagoSettings
+
+settings = MercadoPagoSettings()
 provider_router = APIRouter(prefix="/provider")
 
 @provider_router.post(
     "/link",
     response_model=ProviderAccountResponseSchema,
-    dependencies=[IsOrganizerDep]
+    dependencies=[Depends(IsOrganizerDep)]
 )
 async def link_provider_account(
     account_data: ProviderAccountSchema,
@@ -28,7 +31,7 @@ async def link_provider_account(
 @provider_router.get(
     "/status",
     response_model=ProviderAccountResponseSchema,
-    dependencies=[IsOrganizerDep]
+    dependencies=[Depends(IsOrganizerDep)]
 )
 async def get_provider_status(
     event_id: UUID,
@@ -39,7 +42,7 @@ async def get_provider_status(
 @provider_router.post(
     "/checkout",
     response_model=PaymentResponseSchema,
-    dependencies=[IsRegisteredDep]
+    dependencies=[Depends(IsRegisteredDep)]
 )
 async def create_checkout(
     payment_request: PaymentRequestSchema,
@@ -66,9 +69,9 @@ async def handle_webhook(
     body = await request.body()
     
     # Verificar la firma usando el secreto de Mercado Pago
-    if settings.MERCADOPAGO.WEBHOOK_SECRET:
+    if settings.WEBHOOK_SECRET:
         expected_signature = hmac.new(
-            settings.MERCADOPAGO.WEBHOOK_SECRET.encode(),
+            settings.WEBHOOK_SECRET.encode(),
             body,
             hashlib.sha256
         ).hexdigest()
