@@ -3,13 +3,8 @@ import hmac
 import json
 from uuid import UUID
 import logging
-<<<<<<< HEAD
-
-from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path, Query
-=======
 from typing import Annotated
 from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path
->>>>>>> 838f983 (make it work)
 
 from app.authorization.inscripted_dep import IsRegisteredDep
 from app.authorization.organizer_dep import IsOrganizerDep
