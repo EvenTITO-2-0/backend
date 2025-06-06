@@ -50,8 +50,13 @@ class Repository:
 
         return await self._update_with_conditions(conditions, values_data)
 
-    async def _update_with_conditions(self, conditions, object_update: dict) -> bool:
-        query = update(self.model).where(and_(*conditions)).values(object_update)
+    async def _update_with_conditions(self, conditions, object_update) -> bool:
+        if isinstance(object_update, BaseModel):
+            update_data = object_update.model_dump(mode="json")
+        else:
+            update_data = object_update
+
+        query = update(self.model).where(and_(*conditions)).values(update_data)
         await self.session.execute(query)
         await self.session.commit()
         return True
