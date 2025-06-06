@@ -3,8 +3,13 @@ import hmac
 import json
 from uuid import UUID
 import logging
+<<<<<<< HEAD
 
 from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path, Query
+=======
+from typing import Annotated
+from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path
+>>>>>>> 838f983 (make it work)
 
 from app.authorization.inscripted_dep import IsRegisteredDep
 from app.authorization.organizer_dep import IsOrganizerDep
@@ -21,25 +26,26 @@ logger = logging.getLogger(__name__)
 
 @provider_router.post(
     "/link",
-    response_model=ProviderAccountResponseSchema,
-    dependencies=[Depends(IsOrganizerDep)]
+    response_model=None,
+    dependencies=[]
 )
 async def link_provider_account(
     account_data: ProviderAccountSchema,
-    event_id: UUID,
+    event_id: Annotated[UUID, Path(...)],
     provider_service: ProviderServiceDep
 ) -> ProviderAccountResponseSchema:
+    print(account_data)
+    print(event_id)
     return await provider_service.link_account(event_id, account_data)
 
 @provider_router.get(
     "/status",
-    response_model=ProviderAccountResponseSchema,
-    dependencies=[Depends(IsOrganizerDep)]
+    response_model=ProviderAccountResponseSchema | None
 )
 async def get_provider_status(
-    provider_service: ProviderServiceDep,
-    event_id: UUID = Path(...)
-) -> ProviderAccountResponseSchema:
+    event_id: Annotated[UUID, Path(...)],
+    provider_service: ProviderServiceDep
+) -> ProviderAccountResponseSchema | None:
     logger.info("Getting provider status")
     return await provider_service.get_account_status(event_id)
 
@@ -50,7 +56,6 @@ async def get_provider_status(
 )
 async def create_checkout(
     payment_request: PaymentRequestSchema,
-    event_id: UUID,
     payments_service: EventPaymentsServiceDep
 ) -> PaymentResponseSchema:
     return await payments_service.pay_inscription(payment_request.inscription_id, payment_request)
@@ -61,7 +66,6 @@ async def create_checkout(
 )
 async def handle_webhook(
     request: Request,
-    event_id: UUID,
     payments_service: EventPaymentsServiceDep
 ) -> Response:
     # Verificar la firma del webhook

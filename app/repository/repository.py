@@ -6,8 +6,7 @@ from app.repository.crud_repository import Repository
 T = TypeVar("T", bound="Repository")
 
 
-def get_repository(repository: Type[T], *args):
+def get_repository(repository: Type[T]):
     async def _get_repository(session: SessionDep):
-        return repository(session, *args)
-
+        return repository(session)
     return _get_repository

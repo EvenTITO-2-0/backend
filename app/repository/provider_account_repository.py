@@ -15,3 +15,10 @@ class ProviderAccountRepository(Repository):
     async def get_by_event_id(self, event_id: UUID):
         conditions = [ProviderAccountModel.events.any(id=event_id)]
         return await self._get_with_conditions(conditions)
+
+    async def create(self, data: dict):
+        obj = self.model(**data)
+        self.session.add(obj)
+        await self.session.commit()
+        await self.session.refresh(obj)
+        return obj
