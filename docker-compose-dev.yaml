@@ -58,7 +58,7 @@ services:
   client:
     build:
       context: ../frontend
-      dockerfile: development.dockerfile
+      dockerfile: Dockerfile
     image: client:dev
     command: npm run dev -- --host
     volumes:
