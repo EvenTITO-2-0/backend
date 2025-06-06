@@ -22,6 +22,7 @@ class ProviderService(BaseService):
         self.event_id = event_id
 
     async def link_account(self, event_id: UUID, account_data: ProviderAccountSchema) -> ProviderAccountResponseSchema:
+        logger.info("Linking provider account", extra={"event_id": str(event_id), "account_data": account_data.model_dump()})
         event = await self.events_repository.get(event_id)
         if event.provider_account_id:
             raise ProviderAccountAlreadyExists(event_id)

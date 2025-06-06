@@ -4,7 +4,7 @@ import json
 from uuid import UUID
 import logging
 
-from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path
+from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path, Query
 
 from app.authorization.inscripted_dep import IsRegisteredDep
 from app.authorization.organizer_dep import IsOrganizerDep
@@ -37,8 +37,8 @@ async def link_provider_account(
     dependencies=[Depends(IsOrganizerDep)]
 )
 async def get_provider_status(
-    event_id: UUID,
-    provider_service: ProviderServiceDep
+    provider_service: ProviderServiceDep,
+    event_id: UUID = Path(...)
 ) -> ProviderAccountResponseSchema:
     logger.info("Getting provider status")
     return await provider_service.get_account_status(event_id)
