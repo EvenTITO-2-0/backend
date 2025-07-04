@@ -8,7 +8,6 @@ services:
       # The .env file takes precedence. If some variable is not set,
       # the .env.example file is used for the missing variables.
       - .env
-      - .env.example
     volumes:
       - .:/code
     ports:
@@ -71,4 +70,3 @@ services:
 networks:
   eventito-dev-network:
     name: eventito-dev-network
-    external: true

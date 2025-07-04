@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from uuid import UUID
 
 from app.database.models.inscription import InscriptionRole
@@ -77,8 +77,11 @@ class WorksService(BaseService):
         if InscriptionRole.SPEAKER not in my_inscription.roles:
             raise CannotCreateWorkIfNotSpeakerInscription(self.event_id)
 
+        print("Como no van a logeuar hijos de puta")
+
+        deadline_time = submission_deadline.time or time(23, 59, 59)
         created_work = await self.works_repository.create_work(
-            work, self.event_id, datetime.combine(submission_deadline.date, submission_deadline.time), self.user_id
+            work, self.event_id, datetime.combine(submission_deadline.date, deadline_time), self.user_id
         )
         return created_work.id
 
