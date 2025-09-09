@@ -24,6 +24,11 @@ class MercadoPagoSettings(BaseSettings):
     ACCESS_TOKEN: str | None = None
     WEBHOOK_SECRET: str | None = None
     FRONTEND_URL: str = "http://localhost:5173"
+    API_BASE_URL: str = "https://080a7d17d8eb.ngrok-free.app/api/v1"
+    ENABLE_ENV_PROVIDER_FALLBACK: bool = False
+    MARKETPLACE_NAME: str = "TPP-2"
+    CLIENT_ID: str | None = None
+    CLIENT_SECRET: str | None = None
 
 
 # TODO: Validar que si ENABLE_SEND_EMAILS==True, entonces lo otro este setteado.

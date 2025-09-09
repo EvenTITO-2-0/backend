@@ -15,7 +15,7 @@ from app.routers.events.members.members import event_members_router
 from app.routers.events.members.organizers import event_organizers_router
 from app.routers.events.members.reviewers import event_reviewers_router
 from app.routers.events.payments.payments import events_payments_router
-from app.routers.events.payments.provider import provider_router
+from app.routers.events.payments.provider import provider_router, provider_global_router
 from app.routers.works.reviews import event_reviews_router
 from app.routers.works.submissions import works_submissions_router
 from app.routers.works.works import works_router
@@ -38,6 +38,7 @@ events_router.include_router(inscriptions_events_router)
 events_router.include_router(works_submissions_router)
 events_router.include_router(events_payments_router)
 events_router.include_router(provider_router, prefix="/{event_id}")
+global_provider_router = provider_global_router
 
 
 @events_router.get(

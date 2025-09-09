@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers.events.events import events_router
+from app.routers.events.events import events_router, global_provider_router
 from app.routers.users.users import users_router
 
 app = FastAPI(
@@ -38,3 +38,4 @@ app.add_middleware(
 
 app.include_router(users_router)
 app.include_router(events_router)
+app.include_router(global_provider_router)

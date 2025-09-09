@@ -4,7 +4,7 @@ from app.database.models.provider_account import ProviderAccountStatus
 from uuid import UUID
 class ProviderAccountSchema(BaseModel):
     access_token: str = Field(..., description="Token de acceso de Mercado Pago")
-    refresh_token: str = Field(..., description="Token de refresco de Mercado Pago")
+    refresh_token: str = Field("", description="Token de refresco de Mercado Pago (opcional)")
     public_key: str = Field(..., description="Clave pública de Mercado Pago")
     account_id: str = Field(..., description="ID de la cuenta de Mercado Pago")
     marketplace_fee: float = Field(0.0, description="Comisión del marketplace")

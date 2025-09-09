@@ -8,7 +8,6 @@ services:
       # The .env file takes precedence. If some variable is not set,
       # the .env.example file is used for the missing variables.
       - .env
-      - .env.example
     volumes:
       - .:/code
     ports:
@@ -19,6 +18,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    environment:
+      - MERCADOPAGO_CLIENT_ID=${MERCADOPAGO_CLIENT_ID}
+      - MERCADOPAGO_CLIENT_SECRET=${MERCADOPAGO_CLIENT_SECRET}
 
   postgres:
     image: postgres:14
