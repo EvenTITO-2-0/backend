@@ -32,5 +32,28 @@ class EventPaymentsServiceChecker:
         )
 
 
+class EventPaymentsServiceWebhookChecker:
+    async def __call__(
+        self,
+        event_id: UUID,
+        storage_service: EventInscriptionStorageServiceDep,
+        payments_repository: Annotated[PaymentsRepository, Depends(get_repository(PaymentsRepository))],
+        provider_account_repository: Annotated[ProviderAccountRepository, Depends(get_repository(ProviderAccountRepository))],
+        events_repository: Annotated[EventsRepository, Depends(get_repository(EventsRepository))],
+    ) -> EventPaymentsService:
+
+        return EventPaymentsService(
+            storage_service,
+            payments_repository,
+            provider_account_repository,
+            events_repository,
+            event_id,
+            user_id="webhook",
+        )
+
+
 event_payments_checker = EventPaymentsServiceChecker()
 EventPaymentsServiceDep = Annotated[EventPaymentsService, Depends(event_payments_checker)]
+
+webhook_payments_checker = EventPaymentsServiceWebhookChecker()
+EventPaymentsServiceWebhookDep = Annotated[EventPaymentsService, Depends(webhook_payments_checker)]

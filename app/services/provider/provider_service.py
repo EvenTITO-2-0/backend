@@ -53,10 +53,21 @@ class ProviderService(BaseService):
         except Exception as e:
             raise InvalidProviderCredentials(f"Error al validar credenciales: {str(e)}")
 
-        data = account_data.model_dump()
-        data["user_id"] = event.creator_id
-        data["account_status"] = "ACTIVE"
-        account = await self.provider_account_repository.create(data)
+
+        existing = await self.provider_account_repository.get_by_provider_and_account_id("mercadopago", account_data.account_id)
+        if existing:
+            for k in ["access_token", "refresh_token", "public_key"]:
+                setattr(existing, k, getattr(account_data, k))
+            setattr(existing, "account_status", "ACTIVE")
+            self.provider_account_repository.session.add(existing)
+            await self.provider_account_repository.session.commit()
+            account = existing
+        else:
+            data = account_data.model_dump()
+            data["user_id"] = event.creator_id
+            data["account_status"] = "ACTIVE"
+            account = await self.provider_account_repository.create(data)
+
         await self.events_repository.update(
                     event_id,
                     {"provider_account_id": account.id}
@@ -85,8 +96,8 @@ class ProviderService(BaseService):
             return None
         return ProviderAccountResponseSchema(**account.__dict__)
 
-    async def oauth_link_account_from_code(self, code: str, state_event_id: str):
-        """Intercambia el code de OAuth por tokens y vincula la cuenta al evento indicado en state."""
+    async def oauth_link_account_from_code(self, code: str, state_event_id: str, state_user_id: str):
+        """Intercambia el code de OAuth por tokens y vincula la cuenta al evento indicado en state con el usuario autenticado."""
         if not settings.CLIENT_ID or not settings.CLIENT_SECRET:
             raise InvalidProviderCredentials("OAuth CLIENT_ID/CLIENT_SECRET no configurados")
 
@@ -120,17 +131,34 @@ class ProviderService(BaseService):
 
         event_uuid = UUID(state_event_id)
         event = await self.events_repository.get(event_uuid)
-        data = {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "public_key": public_key,
-            "account_id": account_id,
-            "user_id": event.creator_id,
-            "provider": "mercadopago",
-            "account_status": "ACTIVE",
-            "marketplace_fee": 0.0,
-            "marketplace_fee_type": "percentage",
-        }
-        account = await self.provider_account_repository.create(data)
+
+
+        existing = await self.provider_account_repository.get_by_provider_and_account_id("mercadopago", account_id)
+        if existing:
+            update_data = {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "public_key": public_key,
+                "account_status": "ACTIVE",
+            }
+            for k, v in update_data.items():
+                setattr(existing, k, v)
+            self.provider_account_repository.session.add(existing)
+            await self.provider_account_repository.session.commit()
+            account = existing
+        else:
+            data = {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "public_key": public_key,
+                "account_id": account_id,
+                "user_id": state_user_id,
+                "provider": "mercadopago",
+                "account_status": "ACTIVE",
+                "marketplace_fee": 0.0,
+                "marketplace_fee_type": "percentage",
+            }
+            account = await self.provider_account_repository.create(data)
+
         await self.events_repository.update(event_uuid, {"provider_account_id": account.id})
         return ProviderAccountResponseSchema.from_orm(account)

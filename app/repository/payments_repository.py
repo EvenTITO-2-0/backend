@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
 
 from app.database.models.payment import PaymentModel
 from app.database.models.work import WorkModel
@@ -54,6 +55,19 @@ class PaymentsRepository(Repository):
     async def update_status(self, event_id: UUID, payment_id: UUID, status: PaymentStatusSchema) -> bool:
         conditions = [PaymentModel.event_id == event_id, PaymentModel.id == payment_id]
         return await self._update_with_conditions(conditions, status)
+
+    async def update_provider_fields(self, payment_id: UUID, fields: dict) -> None:
+        await self.session.execute(
+            update(PaymentModel)
+            .where(PaymentModel.id == payment_id)
+            .values(**fields)
+        )
+        await self.session.commit()
+
+    async def get_payment_id_by_preference_id(self, event_id: UUID, preference_id: str) -> UUID | None:
+        conditions = [PaymentModel.event_id == event_id, PaymentModel.provider_preference_id == preference_id]
+        obj = await self._get_with_conditions(conditions)
+        return getattr(obj, 'id', None)
 
     async def _get_payments(self, conditions, offset: int, limit: int) -> list[PaymentResponseSchema]:
         res = await self._get_many_with_conditions(conditions, offset, limit)

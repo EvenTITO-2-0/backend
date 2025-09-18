@@ -2,12 +2,19 @@
 """add provider accounts and event provider
 
 Revision ID: hj5fh6ns36cd
-Revises: 0.0.1
+Revises: 78fa13572a99
 Create Date: 2025-06-03
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+
+# revision identifiers, used by Alembic.
+revision: str = 'hj5fh6ns36cd'
+down_revision: str | None = '78fa13572a99'
+branch_labels = None
+depends_on = None
+
 
 def upgrade():
     # Crear tabla provider_accounts
@@ -37,6 +44,7 @@ def upgrade():
         'events', 'provider_accounts',
         ['provider_account_id'], ['id']
     )
+
 
 def downgrade():
     op.drop_constraint('fk_events_provider_account', 'events', type_='foreignkey')
