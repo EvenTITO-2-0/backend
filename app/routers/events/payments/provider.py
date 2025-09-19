@@ -5,7 +5,7 @@ from uuid import UUID
 import logging
 from typing import Annotated
 from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path, Query
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from app.authorization.caller_id_dep import CallerIdDep
 from app.authorization.organizer_dep import verify_is_organizer
@@ -65,7 +65,8 @@ async def oauth_callback_global(
     events_repository: Annotated[EventsRepository, Depends(get_repository(EventsRepository))] = None,
 ) -> Response:
     try:
-        parts = state.split(":", 1)
+        decoded_state = unquote(state)
+        parts = decoded_state.split(":", 1)
         if len(parts) != 2:
             raise HTTPException(status_code=400, detail="state inválido")
         event_part, user_part = parts[0], parts[1]
