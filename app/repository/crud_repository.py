@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from sqlalchemy import and_, exists, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
+from typing import Union
 
 class Repository:
     """
@@ -40,16 +40,25 @@ class Repository:
         result = await self.session.execute(query)
         return result.scalars().first()
 
-    async def update(self, id, object_update: BaseModel) -> bool:
+    async def update(self, id, object_update: Union[BaseModel, dict]) -> bool:
         conditions = self._primary_key_conditions(id)
-        return await self._update_with_conditions(conditions, object_update)
 
-    async def _update_with_conditions(self, conditions, object_update: BaseModel) -> bool:
-        query = update(self.model).where(and_(*conditions)).values(object_update.model_dump(mode="json"))
-        result = await self.session.execute(query)
+        if isinstance(object_update, BaseModel):
+            values_data = object_update.model_dump(mode="json")
+        else:
+            values_data = object_update
+
+        return await self._update_with_conditions(conditions, values_data)
+
+    async def _update_with_conditions(self, conditions, object_update) -> bool:
+        if isinstance(object_update, BaseModel):
+            update_data = object_update.model_dump(mode="json")
+        else:
+            update_data = object_update
+
+        query = update(self.model).where(and_(*conditions)).values(update_data)
+        await self.session.execute(query)
         await self.session.commit()
-        if result.rowcount < 1:
-            return False
         return True
 
     async def _get_many_with_conditions(self, conditions, offset: int, limit: int):

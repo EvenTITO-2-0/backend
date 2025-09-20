@@ -18,6 +18,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    environment:
+      - MERCADOPAGO_CLIENT_ID=${MERCADOPAGO_CLIENT_ID}
+      - MERCADOPAGO_CLIENT_SECRET=${MERCADOPAGO_CLIENT_SECRET}
 
   postgres:
     image: postgres:14
@@ -56,12 +59,12 @@ services:
       - eventito-dev-network
   client:
     build:
-      context: ../eventito-frontend
+      context: ../frontend
       dockerfile: Dockerfile
     image: client:dev
-    command: npm run dev -- --host
+    command: sh -c "npm install && npm run dev -- --host"
     volumes:
-      - ../eventito-frontend:/app
+      - ../frontend:/app
       - /app/node_modules
     ports:
       - "5173:5173"
