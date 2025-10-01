@@ -34,7 +34,15 @@ async def get_provider_status(
     provider_service: ProviderServiceDep
 ) -> ProviderAccountResponseSchema | None:
     logger.info("Getting provider status")
-    return await provider_service.get_account_status(event_id)
+    logger.info(f"Event ID: {event_id}")
+    
+    try:
+        result = await provider_service.get_account_status(event_id)
+        logger.info(f"Provider status result: {result}")
+        return result
+    except Exception as e:
+        logger.error(f"Error getting provider status: {e}")
+        return None
 
 
 @provider_router.get(
@@ -73,12 +81,14 @@ async def oauth_callback_global(
         event_uuid = UUID(event_part)
 
         service = ProviderService(provider_account_repository, events_repository, event_uuid)
-        await service.oauth_link_account_from_code(code, event_part, user_part)
-        frontend_ok = f"{settings.FRONTEND_URL}/manage/{event_part}/payments?linked=1"
+        result = await service.oauth_link_account_from_code(code, event_part, user_part)
+        
+        frontend_ok = f"{settings.FRONTEND_URL}/manage/{event_part}/administration?linked=1"
         return Response(status_code=302, headers={"Location": frontend_ok})
-    except Exception:
-        logger.exception("OAuth callback error")
-        frontend_fail = f"{settings.FRONTEND_URL}/manage/{state.split(':',1)[0]}/payments?linked=0"
+        
+    except Exception as e:
+        logger.exception(f"OAuth callback error: {str(e)}")
+        frontend_fail = f"{settings.FRONTEND_URL}/manage/{state.split(':',1)[0]}/administration?linked=0"
         return Response(status_code=302, headers={"Location": frontend_fail})
 
 
