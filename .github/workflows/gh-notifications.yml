@@ -13,4 +13,4 @@ jobs:
       env:
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       with:
-        args: '🔔 **Push to `${{ github.ref_name }}`** made by ${{ github.actor }}: `${{ github.event.head_commit.message }}`'
+        args: '🔔 **Push to `${{ github.repository }}`/`${{ github.ref_name }}`** made by ${{ github.actor }}: `${{ github.event.head_commit.message }}`'
