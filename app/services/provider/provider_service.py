@@ -99,8 +99,10 @@ class ProviderService(BaseService):
     async def oauth_link_account_from_code(self, code: str, state_event_id: str, state_user_id: str):
         """Intercambia el code de OAuth por tokens y vincula la cuenta al evento indicado en state con el usuario autenticado."""
         if not settings.CLIENT_ID or not settings.CLIENT_SECRET:
-            raise InvalidProviderCredentials("OAuth CLIENT_ID/CLIENT_SECRET no configurados")
+            logger.error("CLIENT_ID/CLIENT_SECRET not configured")
+            raise InvalidProviderCredentials("OAuth CLIENT_ID/CLIENT_SECRET not configured")
 
+        logger.info("Requesting token from Mercado Pago")
         token_url = "https://api.mercadopago.com/oauth/token"
         redirect_uri = f"{settings.API_BASE_URL}/provider/oauth/callback"
         form = {
@@ -115,26 +117,43 @@ class ProviderService(BaseService):
             "Accept": "application/json",
         }
         token_res = requests.post(token_url, data=form, headers=headers)
+        logger.info(f"Token response status: {token_res.status_code}")
+
         if token_res.status_code != 200:
-            raise InvalidProviderCredentials(f"No se pudo intercambiar el code: {token_res.status_code} {token_res.text}")
+            logger.error(f"Token request failed: {token_res.text}")
+            raise InvalidProviderCredentials(
+                f"Could not exchange code: {token_res.status_code} {token_res.text}")
+
         token_data = token_res.json()
         access_token = token_data.get("access_token")
         refresh_token = token_data.get("refresh_token", "")
+        logger.info(f"Token received: {access_token[:20] if access_token else 'None'}...")
 
+        logger.info("Getting user info from Mercado Pago")
         headers_me = {"Authorization": f"Bearer {access_token}"}
         me_res = requests.get("https://api.mercadopago.com/users/me", headers=headers_me)
+        logger.info(f"User info response status: {me_res.status_code}")
+
         if me_res.status_code != 200:
-            raise InvalidProviderCredentials("No se pudo obtener información de la cuenta")
+            logger.error(f"User info request failed: {me_res.text}")
+            raise InvalidProviderCredentials("Could not get user info")
+
         me = me_res.json()
         account_id = str(me.get("id"))
         public_key = settings.PUBLIC_KEY or ""
+        logger.info(f"Account ID: {account_id}")
 
+        logger.info("Processing event and account")
         event_uuid = UUID(state_event_id)
         event = await self.events_repository.get(event_uuid)
+        logger.info(f"Event retrieved: {event_uuid}")
 
-
+        logger.info("Checking for existing provider account")
         existing = await self.provider_account_repository.get_by_provider_and_account_id("mercadopago", account_id)
+        logger.info(f"Existing account found: {existing is not None}")
+
         if existing:
+            logger.info("Updating existing account")
             update_data = {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
@@ -146,7 +165,9 @@ class ProviderService(BaseService):
             self.provider_account_repository.session.add(existing)
             await self.provider_account_repository.session.commit()
             account = existing
+            logger.info(f"Account updated - ID: {account.id}")
         else:
+            logger.info("Creating new account")
             data = {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
@@ -159,6 +180,16 @@ class ProviderService(BaseService):
                 "marketplace_fee_type": "percentage",
             }
             account = await self.provider_account_repository.create(data)
+            logger.info(f"Account created - ID: {account.id}")
 
+        logger.info("Updating event with provider_account_id")
         await self.events_repository.update(event_uuid, {"provider_account_id": account.id})
-        return ProviderAccountResponseSchema.from_orm(account)
+        logger.info(f"Event {event_uuid} updated with provider_account_id: {account.id}")
+
+        updated_event = await self.events_repository.get(event_uuid)
+        logger.info(f"Verification - Event provider_account_id: {updated_event.provider_account_id}")
+
+        result = ProviderAccountResponseSchema.from_orm(account)
+        logger.info(f"Response created successfully")
+
+        return result
