@@ -66,7 +66,7 @@ class ProviderService(BaseService):
             data = account_data.model_dump()
             data["user_id"] = event.creator_id
             data["account_status"] = "ACTIVE"
-            account = await self.provider_account_repository.create(data)
+            account = await self.provider_account_repository.create_from_dict(data)
 
         await self.events_repository.update(
                     event_id,
@@ -179,7 +179,7 @@ class ProviderService(BaseService):
                 "marketplace_fee": 0.0,
                 "marketplace_fee_type": "percentage",
             }
-            account = await self.provider_account_repository.create(data)
+            account = await self.provider_account_repository.create_from_dict(data)
             logger.info(f"Account created - ID: {account.id}")
 
         logger.info("Updating event with provider_account_id")
