@@ -1,7 +1,11 @@
 # backend/app/schemas/provider/provider.py
-from pydantic import BaseModel, Field
-from app.database.models.provider_account import ProviderAccountStatus
 from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+from app.database.models.provider_account import ProviderAccountStatus
+
+
 class ProviderAccountSchema(BaseModel):
     access_token: str = Field(..., description="Token de acceso de Mercado Pago")
     refresh_token: str = Field("", description="Token de refresco de Mercado Pago (opcional)")

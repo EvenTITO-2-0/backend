@@ -1,13 +1,14 @@
 # backend/app/services/provider/provider_service_dep.py
 from typing import Annotated
-from fastapi import Depends
-from app.services.provider.provider_service import ProviderService
 from uuid import UUID
-from app.repository.provider_account_repository import ProviderAccountRepository
+
+from fastapi import Depends, Path
+
 from app.repository.events_repository import EventsRepository
+from app.repository.provider_account_repository import ProviderAccountRepository
 from app.repository.repository import get_repository
 from app.services.provider.provider_service import ProviderService
-from fastapi import Path
+
 
 class ProviderServiceChecker:
     async def __call__(

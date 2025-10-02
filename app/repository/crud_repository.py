@@ -1,8 +1,10 @@
+from typing import Union
+
 from pydantic import BaseModel
 from sqlalchemy import and_, exists, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import Union
+
 
 class Repository:
     """

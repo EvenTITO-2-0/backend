@@ -1,19 +1,18 @@
 from logging import getLogger
-from uuid import UUID
 from typing import Annotated
+from uuid import UUID
 
 import requests
 from fastapi import Path
 
-from app.services.services import BaseService
-from app.repository.provider_account_repository import ProviderAccountRepository
-from app.repository.events_repository import EventsRepository
-from app.schemas.provider.provider import ProviderAccountSchema, ProviderAccountResponseSchema
 from app.exceptions.provider_exceptions import (
-    ProviderAccountNotFound,
-    ProviderAccountAlreadyExists,
     InvalidProviderCredentials,
+    ProviderAccountAlreadyExists,
 )
+from app.repository.events_repository import EventsRepository
+from app.repository.provider_account_repository import ProviderAccountRepository
+from app.schemas.provider.provider import ProviderAccountResponseSchema, ProviderAccountSchema
+from app.services.services import BaseService
 from app.settings.settings import MercadoPagoSettings
 
 logger = getLogger(__name__)
@@ -51,14 +50,14 @@ class ProviderService(BaseService):
                 raise InvalidProviderCredentials("El ID de cuenta no coincide con el token proporcionado")
 
         except Exception as e:
-            raise InvalidProviderCredentials(f"Error al validar credenciales: {str(e)}")
+            raise InvalidProviderCredentials(f"Error al validar credenciales: {str(e)}") from e
 
 
         existing = await self.provider_account_repository.get_by_provider_and_account_id("mercadopago", account_data.account_id)
         if existing:
             for k in ["access_token", "refresh_token", "public_key"]:
                 setattr(existing, k, getattr(account_data, k))
-            setattr(existing, "account_status", "ACTIVE")
+            existing.account_status = "ACTIVE"
             self.provider_account_repository.session.add(existing)
             await self.provider_account_repository.session.commit()
             account = existing
@@ -145,7 +144,6 @@ class ProviderService(BaseService):
 
         logger.info("Processing event and account")
         event_uuid = UUID(state_event_id)
-        event = await self.events_repository.get(event_uuid)
         logger.info(f"Event retrieved: {event_uuid}")
 
         logger.info("Checking for existing provider account")
@@ -190,6 +188,6 @@ class ProviderService(BaseService):
         logger.info(f"Verification - Event provider_account_id: {updated_event.provider_account_id}")
 
         result = ProviderAccountResponseSchema.from_orm(account)
-        logger.info(f"Response created successfully")
+        logger.info("Response created successfully")
 
         return result

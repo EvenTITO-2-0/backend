@@ -1,18 +1,19 @@
-from uuid import UUID
 from logging import getLogger
+from uuid import UUID
 
+from fastapi import HTTPException
+from mercadopago import SDK
+
+from app.database.models.payment import PaymentStatus
 from app.exceptions.payments_exceptions import PaymentNotFound
+from app.repository.events_repository import EventsRepository
 from app.repository.payments_repository import PaymentsRepository
+from app.repository.provider_account_repository import ProviderAccountRepository
 from app.schemas.payments.payment import PaymentRequestSchema, PaymentResponseSchema, PaymentStatusSchema
 from app.schemas.users.utils import UID
 from app.services.services import BaseService
 from app.services.storage.event_inscription_storage_service import EventInscriptionStorageService
-from app.database.models.payment import PaymentStatus
-from mercadopago import SDK
-from app.repository.provider_account_repository import ProviderAccountRepository
-from app.repository.events_repository import EventsRepository
 from app.settings.settings import MercadoPagoSettings
-from fastapi import HTTPException
 
 logger = getLogger(__name__)
 
@@ -58,8 +59,8 @@ class EventPaymentsService(BaseService):
         try:
             raw_value = fare.get("value", 0)
             amount = float(raw_value) if not isinstance(raw_value, (int, float)) else float(raw_value)
-        except Exception:
-            raise HTTPException(status_code=400, detail="Valor de tarifa inválido")
+        except Exception as err:
+            raise HTTPException(status_code=400, detail="Valor de tarifa inválido") from err
         if amount <= 0:
             raise HTTPException(status_code=400, detail="El monto de la tarifa debe ser mayor a 0")
         if not self._settings.API_BASE_URL:
@@ -106,7 +107,7 @@ class EventPaymentsService(BaseService):
             "preference_id": checkout_data.get("id") or checkout_data.get("preference_id", "")
         }
 
-    async def handle_webhook(self, payment_data: dict) -> None:
+    async def handle_webhook(self, payment_data: dict) -> None:  # noqa: C901
         query = payment_data.get("_query", {}) if isinstance(payment_data, dict) else {}
         q_id = query.get("id")
         q_topic = query.get("topic")
@@ -154,7 +155,7 @@ class EventPaymentsService(BaseService):
                     status = status or pr.get("status")
                 # fallback: merchant_order.external_reference
                 external_reference = external_reference or mo.get("external_reference")
-            except Exception as e:
+            except Exception:
                 logger.exception("Error consultando merchant_order/payment", extra={
                     "event_id": str(self.event_id),
                     "mo_id": q_id,

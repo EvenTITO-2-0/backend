@@ -1,22 +1,21 @@
-import hashlib
-import hmac
 import json
-from uuid import UUID
 import logging
 from typing import Annotated
-from fastapi import APIRouter, Request, Response, HTTPException, Depends, Path, Query
 from urllib.parse import quote, unquote
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 
 from app.authorization.caller_id_dep import CallerIdDep
 from app.authorization.organizer_dep import verify_is_organizer
-from app.schemas.provider.provider import ProviderAccountResponseSchema
-from app.schemas.payments.payment import PaymentStatusSchema
-from app.services.event_payments.event_payments_service_dep import EventPaymentsServiceWebhookDep
-from app.services.provider.provider_service_dep import ProviderServiceDep
-from app.services.provider.provider_service import ProviderService
-from app.repository.provider_account_repository import ProviderAccountRepository
 from app.repository.events_repository import EventsRepository
+from app.repository.provider_account_repository import ProviderAccountRepository
 from app.repository.repository import get_repository
+from app.schemas.payments.payment import PaymentStatusSchema
+from app.schemas.provider.provider import ProviderAccountResponseSchema
+from app.services.event_payments.event_payments_service_dep import EventPaymentsServiceWebhookDep
+from app.services.provider.provider_service import ProviderService
+from app.services.provider.provider_service_dep import ProviderServiceDep
 from app.settings.settings import MercadoPagoSettings
 
 settings = MercadoPagoSettings()
@@ -75,10 +74,10 @@ async def oauth_callback_global(
 
         service = ProviderService(provider_account_repository, events_repository, event_uuid)
         await service.oauth_link_account_from_code(code, event_part, user_part)
-        
+
         frontend_ok = f"{settings.FRONTEND_URL}/manage/{event_part}/administration?linked=1"
         return Response(status_code=302, headers={"Location": frontend_ok})
-        
+
     except Exception as e:
         logger.exception(f"OAuth callback error: {str(e)}")
         frontend_fail = f"{settings.FRONTEND_URL}/manage/{state.split(':',1)[0]}/administration?linked=0"
@@ -132,7 +131,6 @@ async def handle_webhook(
     request: Request,
     payments_service: EventPaymentsServiceWebhookDep
 ) -> Response:
-    signature = request.headers.get("x-signature")
     body = await request.body()
 
     try:

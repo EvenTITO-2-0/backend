@@ -15,7 +15,7 @@ from app.routers.events.members.members import event_members_router
 from app.routers.events.members.organizers import event_organizers_router
 from app.routers.events.members.reviewers import event_reviewers_router
 from app.routers.events.payments.payments import events_payments_router
-from app.routers.events.payments.provider import provider_router, provider_global_router
+from app.routers.events.payments.provider import provider_global_router, provider_router
 from app.routers.works.reviews import event_reviews_router
 from app.routers.works.submissions import works_submissions_router
 from app.routers.works.works import works_router

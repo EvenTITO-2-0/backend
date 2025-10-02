@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models.payment import PaymentModel
 from app.database.models.work import WorkModel

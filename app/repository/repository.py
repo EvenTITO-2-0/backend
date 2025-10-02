@@ -1,4 +1,4 @@
-from typing import Type, TypeVar, Any
+from typing import Any, Type, TypeVar
 
 from app.database.session_dep import SessionDep
 from app.repository.crud_repository import Repository

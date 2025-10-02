@@ -1,7 +1,6 @@
 # backend/app/exceptions/provider_exceptions.py
-from fastapi import status
-from app.exceptions.base_exception import BaseHTTPException
 from uuid import UUID
+
 
 class ProviderAccountNotFound(BaseException):
     def __init__(self, event_id: UUID):

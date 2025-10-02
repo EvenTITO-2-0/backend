@@ -1,10 +1,11 @@
 # backend/app/repository/provider_account_repository.py
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_
+
 from app.database.models.provider_account import ProviderAccountModel
 from app.repository.crud_repository import Repository
-from pydantic import BaseModel
+
 
 class ProviderAccountRepository(Repository):
     def __init__(self, session: AsyncSession):

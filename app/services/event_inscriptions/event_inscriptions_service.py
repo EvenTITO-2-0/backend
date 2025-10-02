@@ -21,8 +21,6 @@ from app.schemas.payments.payment import (
     PaymentDownloadSchema,
     PaymentRequestSchema,
     PaymentResponseSchema,
-    PaymentUploadSchema,
-    PaymentIdSchema,
 )
 from app.schemas.users.utils import UID
 from app.services.event_payments.event_payments_service import EventPaymentsService
