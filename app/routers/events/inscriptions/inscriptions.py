@@ -114,10 +114,7 @@ async def pay_inscription(
     payment_data = await inscriptions_service.pay(inscription_id, payment_request)
 
     if isinstance(payment_data, dict) and payment_data.get("upload_url") is not None:
-        return PaymentUploadSchema(
-            id=payment_data.get("payment_id"),
-            upload_url=payment_data.get("upload_url")
-        )
+        return PaymentUploadSchema(id=payment_data.get("payment_id"), upload_url=payment_data.get("upload_url"))
 
     checkout_url = payment_data.get("checkout_url") if isinstance(payment_data, dict) else None
     if checkout_url:

@@ -37,11 +37,7 @@ class EventPaymentsService(BaseService):
         self._settings = MercadoPagoSettings()
 
     async def pay_inscription(self, inscription_id: UUID, payment_request: PaymentRequestSchema) -> dict:
-        payment_id = await self.payments_repository.do_new_payment(
-            self.event_id,
-            inscription_id,
-            payment_request
-        )
+        payment_id = await self.payments_repository.do_new_payment(self.event_id, inscription_id, payment_request)
         event = await self.events_repository.get(self.event_id)
         access_token = None
         if event.provider_account_id:
@@ -65,7 +61,7 @@ class EventPaymentsService(BaseService):
             raise HTTPException(status_code=400, detail="El monto de la tarifa debe ser mayor a 0")
         if not self._settings.API_BASE_URL:
             raise HTTPException(status_code=500, detail="MERCADOPAGO_API_BASE_URL no configurado en el backend")
-        api_base = self._settings.API_BASE_URL.rstrip('/')
+        api_base = self._settings.API_BASE_URL.rstrip("/")
         back_urls = {
             "success": f"{api_base}/events/{event.id}/provider/return/success",
             "failure": f"{api_base}/events/{event.id}/provider/return/failure",
@@ -91,20 +87,26 @@ class EventPaymentsService(BaseService):
         checkout_data = preference_response.get("response", {})
         init_point = checkout_data.get("init_point") or checkout_data.get("sandbox_init_point")
         if not init_point:
-            raise HTTPException(status_code=502, detail={
-                "message": "Mercado Pago no devolvió checkout_url",
-                "mp_status": preference_response.get("status"),
-                "mp_response": checkout_data,
-            })
-        await self.payments_repository.update_provider_fields(payment_id, {
-            "amount": amount,
-            "currency": "ARS",
-            "provider_preference_id": checkout_data.get("id") or checkout_data.get("preference_id", "")
-        })
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "message": "Mercado Pago no devolvió checkout_url",
+                    "mp_status": preference_response.get("status"),
+                    "mp_response": checkout_data,
+                },
+            )
+        await self.payments_repository.update_provider_fields(
+            payment_id,
+            {
+                "amount": amount,
+                "currency": "ARS",
+                "provider_preference_id": checkout_data.get("id") or checkout_data.get("preference_id", ""),
+            },
+        )
         return {
             "payment_id": payment_id,
             "checkout_url": init_point,
-            "preference_id": checkout_data.get("id") or checkout_data.get("preference_id", "")
+            "preference_id": checkout_data.get("id") or checkout_data.get("preference_id", ""),
         }
 
     async def handle_webhook(self, payment_data: dict) -> None:  # noqa: C901
@@ -112,12 +114,15 @@ class EventPaymentsService(BaseService):
         q_id = query.get("id")
         q_topic = query.get("topic")
 
-        logger.info("Webhook recibido", extra={
-            "event_id": str(self.event_id),
-            "topic": q_topic,
-            "query_id": q_id,
-            "has_body": bool(payment_data),
-        })
+        logger.info(
+            "Webhook recibido",
+            extra={
+                "event_id": str(self.event_id),
+                "topic": q_topic,
+                "query_id": q_id,
+                "has_body": bool(payment_data),
+            },
+        )
 
         external_reference = payment_data.get("external_reference") if isinstance(payment_data, dict) else None
         status = payment_data.get("status") if isinstance(payment_data, dict) else None
@@ -142,11 +147,14 @@ class EventPaymentsService(BaseService):
                 mo_resp = mp.merchant_order().get(q_id)
                 mo = mo_resp.get("response", {})
                 payments = mo.get("payments", []) or []
-                logger.info("Merchant order obtenida", extra={
-                    "event_id": str(self.event_id),
-                    "mo_id": q_id,
-                    "payments_count": len(payments),
-                })
+                logger.info(
+                    "Merchant order obtenida",
+                    extra={
+                        "event_id": str(self.event_id),
+                        "mo_id": q_id,
+                        "payments_count": len(payments),
+                    },
+                )
                 if payments:
                     provider_payment_id = str(payments[-1].get("id"))
                     pr_resp = mp.payment().get(provider_payment_id)
@@ -156,51 +164,69 @@ class EventPaymentsService(BaseService):
                 # fallback: merchant_order.external_reference
                 external_reference = external_reference or mo.get("external_reference")
             except Exception:
-                logger.exception("Error consultando merchant_order/payment", extra={
-                    "event_id": str(self.event_id),
-                    "mo_id": q_id,
-                    "provider_payment_id": provider_payment_id,
-                })
+                logger.exception(
+                    "Error consultando merchant_order/payment",
+                    extra={
+                        "event_id": str(self.event_id),
+                        "mo_id": q_id,
+                        "provider_payment_id": provider_payment_id,
+                    },
+                )
 
         if not external_reference and preference_id:
             try:
                 ref = await self.payments_repository.get_payment_id_by_preference_id(self.event_id, preference_id)
                 if ref:
                     external_reference = str(ref)
-                    logger.info("Resuelto payment por preference_id", extra={
+                    logger.info(
+                        "Resuelto payment por preference_id",
+                        extra={
+                            "event_id": str(self.event_id),
+                            "preference_id": preference_id,
+                            "external_reference": external_reference,
+                        },
+                    )
+            except Exception:
+                logger.exception(
+                    "Error resolviendo por preference_id",
+                    extra={
                         "event_id": str(self.event_id),
                         "preference_id": preference_id,
-                        "external_reference": external_reference,
-                    })
-            except Exception:
-                logger.exception("Error resolviendo por preference_id", extra={
-                    "event_id": str(self.event_id),
-                    "preference_id": preference_id,
-                })
+                    },
+                )
 
         if (not status) and mo:
             try:
                 total_amount = float(mo.get("total_amount") or 0)
                 paid_amount = float(mo.get("paid_amount") or 0)
                 mo_status = (mo.get("status") or "").lower()
-                logger.info("Inferencia desde merchant_order", extra={
-                    "event_id": str(self.event_id),
-                    "mo_id": q_id,
-                    "mo_status": mo_status,
-                    "total_amount": total_amount,
-                    "paid_amount": paid_amount,
-                })
+                logger.info(
+                    "Inferencia desde merchant_order",
+                    extra={
+                        "event_id": str(self.event_id),
+                        "mo_id": q_id,
+                        "mo_status": mo_status,
+                        "total_amount": total_amount,
+                        "paid_amount": paid_amount,
+                    },
+                )
                 if total_amount > 0 and paid_amount >= total_amount:
                     status = "approved"
-                elif mo_status in ["opened", "payment_required", "partially_paid", "in_process"] and paid_amount < total_amount:
+                elif (
+                    mo_status in ["opened", "payment_required", "partially_paid", "in_process"]
+                    and paid_amount < total_amount
+                ):
                     status = "pending"
                 elif mo_status in ["cancelled", "closed"] and paid_amount == 0:
                     status = "rejected"
             except Exception:
-                logger.exception("Error infiriendo estado desde merchant_order", extra={
-                    "event_id": str(self.event_id),
-                    "mo_id": q_id,
-                })
+                logger.exception(
+                    "Error infiriendo estado desde merchant_order",
+                    extra={
+                        "event_id": str(self.event_id),
+                        "mo_id": q_id,
+                    },
+                )
 
         if (not external_reference or not status) and provider_payment_id and access_token:
             mp = SDK(access_token)
@@ -210,30 +236,39 @@ class EventPaymentsService(BaseService):
                 external_reference = external_reference or body.get("external_reference")
                 status = status or body.get("status")
                 if external_reference:
-                    await self.payments_repository.update_provider_fields(UUID(external_reference), {
-                        "provider_payment_id": str(provider_payment_id)
-                    })
-                logger.info("Payment consultado", extra={
-                    "event_id": str(self.event_id),
-                    "provider_payment_id": provider_payment_id,
-                    "status": status,
-                    "external_reference": external_reference,
-                })
+                    await self.payments_repository.update_provider_fields(
+                        UUID(external_reference), {"provider_payment_id": str(provider_payment_id)}
+                    )
+                logger.info(
+                    "Payment consultado",
+                    extra={
+                        "event_id": str(self.event_id),
+                        "provider_payment_id": provider_payment_id,
+                        "status": status,
+                        "external_reference": external_reference,
+                    },
+                )
             except Exception:
-                logger.exception("Error consultando payment", extra={
-                    "event_id": str(self.event_id),
-                    "provider_payment_id": provider_payment_id,
-                })
+                logger.exception(
+                    "Error consultando payment",
+                    extra={
+                        "event_id": str(self.event_id),
+                        "provider_payment_id": provider_payment_id,
+                    },
+                )
 
         if not external_reference or not status:
-            logger.warning("Webhook no resolvió pago", extra={
-                "event_id": str(self.event_id),
-                "topic": q_topic,
-                "query_id": q_id,
-                "provider_payment_id": provider_payment_id,
-                "external_reference": external_reference,
-                "status": status,
-            })
+            logger.warning(
+                "Webhook no resolvió pago",
+                extra={
+                    "event_id": str(self.event_id),
+                    "topic": q_topic,
+                    "query_id": q_id,
+                    "provider_payment_id": provider_payment_id,
+                    "external_reference": external_reference,
+                    "status": status,
+                },
+            )
             return
 
         status_map = {
@@ -241,15 +276,18 @@ class EventPaymentsService(BaseService):
             "rejected": PaymentStatus.REJECTED,
             "pending": PaymentStatus.PENDING_APPROVAL,
             "in_process": PaymentStatus.PENDING_APPROVAL,
-            "cancelled": PaymentStatus.REJECTED
+            "cancelled": PaymentStatus.REJECTED,
         }
         new_status = PaymentStatusSchema(status=status_map.get(status, PaymentStatus.UNCOMPLETED))
         await self.update_payment_status(UUID(external_reference), new_status)
-        logger.info("Pago actualizado", extra={
-            "event_id": str(self.event_id),
-            "payment_id": external_reference,
-            "new_status": new_status.status,
-        })
+        logger.info(
+            "Pago actualizado",
+            extra={
+                "event_id": str(self.event_id),
+                "payment_id": external_reference,
+                "new_status": new_status.status,
+            },
+        )
 
     async def get_inscription_payment(self, inscription_id: UUID, payment_id: UUID) -> PaymentResponseSchema:
         return await self.payments_repository.get_payment(self.event_id, inscription_id, payment_id)

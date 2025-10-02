@@ -20,6 +20,7 @@ class PaymentRequestSchema(BaseModel):
     fare_name: str = Field(examples=["tarifa de speaker"])
     works: list[UUID] | None
 
+
 class PaymentStatusSchema(BaseModel):
     status: PaymentStatus = Field(examples=[PaymentStatus.APPROVED])
 

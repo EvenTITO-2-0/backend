@@ -24,24 +24,16 @@ provider_global_router = APIRouter(prefix="/provider")
 logger = logging.getLogger(__name__)
 
 
-@provider_router.get(
-    "/status",
-    response_model=ProviderAccountResponseSchema | None
-)
+@provider_router.get("/status", response_model=ProviderAccountResponseSchema | None)
 async def get_provider_status(
-    event_id: Annotated[UUID, Path(...)],
-    provider_service: ProviderServiceDep
+    event_id: Annotated[UUID, Path(...)], provider_service: ProviderServiceDep
 ) -> ProviderAccountResponseSchema | None:
     logger.info("Getting provider status")
     logger.info(f"Event ID: {event_id}")
     return await provider_service.get_account_status(event_id)
 
 
-@provider_router.get(
-    "/oauth/url",
-    response_model=str,
-    dependencies=[Depends(verify_is_organizer)]
-)
+@provider_router.get("/oauth/url", response_model=str, dependencies=[Depends(verify_is_organizer)])
 async def get_oauth_url(event_id: Annotated[UUID, Path(...)], caller_id: CallerIdDep) -> str:
     if not settings.CLIENT_ID:
         raise HTTPException(status_code=400, detail="OAuth CLIENT_ID no configurado")
@@ -54,14 +46,13 @@ async def get_oauth_url(event_id: Annotated[UUID, Path(...)], caller_id: CallerI
     return f"{base}?client_id={settings.CLIENT_ID}&response_type=code&redirect_uri={encoded_redirect}&state={state}"
 
 
-@provider_global_router.get(
-    "/oauth/callback",
-    response_model=None
-)
+@provider_global_router.get("/oauth/callback", response_model=None)
 async def oauth_callback_global(
     code: str = Query(...),
     state: str = Query(...),
-    provider_account_repository: Annotated[ProviderAccountRepository, Depends(get_repository(ProviderAccountRepository))] = None,
+    provider_account_repository: Annotated[
+        ProviderAccountRepository, Depends(get_repository(ProviderAccountRepository))
+    ] = None,
     events_repository: Annotated[EventsRepository, Depends(get_repository(EventsRepository))] = None,
 ) -> Response:
     try:
@@ -84,10 +75,7 @@ async def oauth_callback_global(
         return Response(status_code=302, headers={"Location": frontend_fail})
 
 
-@provider_router.get(
-    "/return/{result}",
-    response_model=None
-)
+@provider_router.get("/return/{result}", response_model=None)
 async def provider_return(
     result: str,
     event_id: Annotated[UUID, Path(...)],
@@ -113,24 +101,21 @@ async def provider_return(
         try:
             await payments_service.update_payment_status(UUID(ext_ref), PaymentStatusSchema(status=chosen))
         except Exception:
-            logger.exception("Error actualizando status desde return", extra={
-                "event_id": str(event_id),
-                "external_reference": ext_ref,
-                "chosen": chosen,
-            })
+            logger.exception(
+                "Error actualizando status desde return",
+                extra={
+                    "event_id": str(event_id),
+                    "external_reference": ext_ref,
+                    "chosen": chosen,
+                },
+            )
 
     target = f"{settings.FRONTEND_URL}/events/{event_id}/roles/attendee"
     return Response(status_code=302, headers={"Location": target})
 
 
-@provider_router.post(
-    "/webhook",
-    status_code=200
-)
-async def handle_webhook(
-    request: Request,
-    payments_service: EventPaymentsServiceWebhookDep
-) -> Response:
+@provider_router.post("/webhook", status_code=200)
+async def handle_webhook(request: Request, payments_service: EventPaymentsServiceWebhookDep) -> Response:
     body = await request.body()
 
     try:

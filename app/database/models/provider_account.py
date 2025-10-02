@@ -14,6 +14,7 @@ class ProviderAccountStatus(str, Enum):
     PENDING = "PENDING"
     REJECTED = "REJECTED"
 
+
 class ProviderAccountModel(ModelTemplate, Base):
     __tablename__ = "provider_accounts"
 

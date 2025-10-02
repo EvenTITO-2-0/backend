@@ -9,4 +9,5 @@ T = TypeVar("T", bound="Repository")
 def get_repository(repository: Type[T]) -> Any:
     async def _get_repository(session: SessionDep) -> T:
         return repository(session)  # type: ignore
+
     return _get_repository

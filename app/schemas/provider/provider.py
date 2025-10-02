@@ -14,6 +14,7 @@ class ProviderAccountSchema(BaseModel):
     marketplace_fee: float = Field(0.0, description="Comisión del marketplace")
     marketplace_fee_type: str = Field("percentage", description="Tipo de comisión (percentage o fixed)")
 
+
 class ProviderAccountResponseSchema(ProviderAccountSchema):
     id: UUID
     user_id: str
