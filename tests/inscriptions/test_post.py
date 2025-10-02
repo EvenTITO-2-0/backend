@@ -1,6 +1,6 @@
-import pytest
 import uuid
 
+import pytest
 from fastapi.encoders import jsonable_encoder
 
 from app.database.models.inscription import InscriptionStatus
