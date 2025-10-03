@@ -1,7 +1,8 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from app.authorization.admin_user_dep import IsAdminUsrDep
 from app.authorization.inscripted_dep import IsRegisteredDep, verify_is_registered
@@ -22,7 +23,6 @@ from app.schemas.payments.payment import (
     PaymentUploadSchema,
 )
 from app.services.event_inscriptions.event_inscriptions_service_dep import EventInscriptionsServiceDep
-from pydantic import BaseModel
 
 inscriptions_events_router = APIRouter(prefix="/{event_id}/inscriptions", tags=["Event: Inscriptions"])
 
@@ -114,15 +114,15 @@ async def pay_inscription(
     payment_data = await inscriptions_service.pay(inscription_id, payment_request)
 
     if isinstance(payment_data, dict) and payment_data.get("upload_url") is not None:
-        return {"id": payment_data.get("payment_id"), "upload_url": payment_data.get("upload_url")}
+        return PaymentUploadSchema(id=payment_data.get("payment_id"), upload_url=payment_data.get("upload_url"))
 
     checkout_url = payment_data.get("checkout_url") if isinstance(payment_data, dict) else None
     if checkout_url:
-        return {
-            "payment_id": payment_data.get("payment_id"),
-            "checkout_url": checkout_url,
-            "preference_id": payment_data.get("preference_id"),
-        }
+        return PaymentCheckoutSchema(
+            payment_id=payment_data.get("payment_id"),
+            checkout_url=checkout_url,
+            preference_id=payment_data.get("preference_id"),
+        )
 
     raise HTTPException(status_code=502, detail="No se pudo generar la URL de pago")
 

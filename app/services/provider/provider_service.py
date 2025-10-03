@@ -1,45 +1,45 @@
 from logging import getLogger
-from uuid import UUID
 from typing import Annotated
+from uuid import UUID
 
 import requests
 from fastapi import Path
 
-from app.services.services import BaseService
-from app.repository.provider_account_repository import ProviderAccountRepository
-from app.repository.events_repository import EventsRepository
-from app.schemas.provider.provider import ProviderAccountSchema, ProviderAccountResponseSchema
 from app.exceptions.provider_exceptions import (
-    ProviderAccountNotFound,
-    ProviderAccountAlreadyExists,
     InvalidProviderCredentials,
+    ProviderAccountAlreadyExists,
 )
+from app.repository.events_repository import EventsRepository
+from app.repository.provider_account_repository import ProviderAccountRepository
+from app.schemas.provider.provider import ProviderAccountResponseSchema, ProviderAccountSchema
+from app.services.services import BaseService
 from app.settings.settings import MercadoPagoSettings
 
 logger = getLogger(__name__)
 settings = MercadoPagoSettings()
+
 
 class ProviderService(BaseService):
     def __init__(
         self,
         provider_account_repository: ProviderAccountRepository,
         events_repository: EventsRepository,
-        event_id: Annotated[UUID, Path(...)]
+        event_id: Annotated[UUID, Path(...)],
     ):
         self.provider_account_repository = provider_account_repository
         self.events_repository = events_repository
         self.event_id = event_id
 
     async def link_account(self, event_id: UUID, account_data: ProviderAccountSchema) -> ProviderAccountResponseSchema:
-        logger.info("Linking provider account", extra={"event_id": str(event_id), "account_data": account_data.model_dump()})
+        logger.info(
+            "Linking provider account", extra={"event_id": str(event_id), "account_data": account_data.model_dump()}
+        )
         event = await self.events_repository.get(event_id)
         if event.provider_account_id:
             raise ProviderAccountAlreadyExists(event_id)
 
         try:
-            headers = {
-                "Authorization": f"Bearer {account_data.access_token}"
-            }
+            headers = {"Authorization": f"Bearer {account_data.access_token}"}
             response = requests.get("https://api.mercadopago.com/users/me", headers=headers)
 
             if response.status_code != 200:
@@ -51,14 +51,15 @@ class ProviderService(BaseService):
                 raise InvalidProviderCredentials("El ID de cuenta no coincide con el token proporcionado")
 
         except Exception as e:
-            raise InvalidProviderCredentials(f"Error al validar credenciales: {str(e)}")
+            raise InvalidProviderCredentials(f"Error al validar credenciales: {str(e)}") from e
 
-
-        existing = await self.provider_account_repository.get_by_provider_and_account_id("mercadopago", account_data.account_id)
+        existing = await self.provider_account_repository.get_by_provider_and_account_id(
+            "mercadopago", account_data.account_id
+        )
         if existing:
             for k in ["access_token", "refresh_token", "public_key"]:
                 setattr(existing, k, getattr(account_data, k))
-            setattr(existing, "account_status", "ACTIVE")
+            existing.account_status = "ACTIVE"
             self.provider_account_repository.session.add(existing)
             await self.provider_account_repository.session.commit()
             account = existing
@@ -66,12 +67,9 @@ class ProviderService(BaseService):
             data = account_data.model_dump()
             data["user_id"] = event.creator_id
             data["account_status"] = "ACTIVE"
-            account = await self.provider_account_repository.create(data)
+            account = await self.provider_account_repository.create_from_dict(data)
 
-        await self.events_repository.update(
-                    event_id,
-                    {"provider_account_id": account.id}
-                )
+        await self.events_repository.update(event_id, {"provider_account_id": account.id})
 
         return ProviderAccountResponseSchema.from_orm(account)
 
@@ -121,8 +119,7 @@ class ProviderService(BaseService):
 
         if token_res.status_code != 200:
             logger.error(f"Token request failed: {token_res.text}")
-            raise InvalidProviderCredentials(
-                f"Could not exchange code: {token_res.status_code} {token_res.text}")
+            raise InvalidProviderCredentials(f"Could not exchange code: {token_res.status_code} {token_res.text}")
 
         token_data = token_res.json()
         access_token = token_data.get("access_token")
@@ -145,7 +142,6 @@ class ProviderService(BaseService):
 
         logger.info("Processing event and account")
         event_uuid = UUID(state_event_id)
-        event = await self.events_repository.get(event_uuid)
         logger.info(f"Event retrieved: {event_uuid}")
 
         logger.info("Checking for existing provider account")
@@ -179,7 +175,7 @@ class ProviderService(BaseService):
                 "marketplace_fee": 0.0,
                 "marketplace_fee_type": "percentage",
             }
-            account = await self.provider_account_repository.create(data)
+            account = await self.provider_account_repository.create_from_dict(data)
             logger.info(f"Account created - ID: {account.id}")
 
         logger.info("Updating event with provider_account_id")
@@ -190,6 +186,6 @@ class ProviderService(BaseService):
         logger.info(f"Verification - Event provider_account_id: {updated_event.provider_account_id}")
 
         result = ProviderAccountResponseSchema.from_orm(account)
-        logger.info(f"Response created successfully")
+        logger.info("Response created successfully")
 
         return result

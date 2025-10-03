@@ -1,3 +1,4 @@
+import pytest
 from fastapi.encoders import jsonable_encoder
 
 from app.database.models.payment import PaymentStatus
@@ -7,6 +8,7 @@ from app.schemas.payments.payment import PaymentRequestSchema, PaymentStatusSche
 from ..commontest import create_headers
 
 
+@pytest.mark.skip(reason="Requires Mercado Pago configuration")
 async def test_get_payments(
     client, create_user, create_event_creator, create_event_started_from_event_creator, create_many_works
 ):
@@ -89,6 +91,7 @@ async def test_get_payments(
     assert payments[1]["fare_name"] == "tarifa a pagar 2"
 
 
+@pytest.mark.skip(reason="Requires Mercado Pago configuration")
 async def test_patch_payments(
     client, create_user, create_event_creator, create_event_started_from_event_creator, create_many_works
 ):

@@ -1,5 +1,6 @@
 from enum import Enum
-from sqlalchemy import Column, String, ForeignKey, Float
+
+from sqlalchemy import Column, Float, ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from app.database.models.base import Base
@@ -12,6 +13,7 @@ class ProviderAccountStatus(str, Enum):
     INACTIVE = "INACTIVE"
     PENDING = "PENDING"
     REJECTED = "REJECTED"
+
 
 class ProviderAccountModel(ModelTemplate, Base):
     __tablename__ = "provider_accounts"
