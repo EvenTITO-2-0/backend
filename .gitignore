@@ -174,3 +174,4 @@ pyvenv.cfg
 
 #bin
 /bin
+node_modules/
