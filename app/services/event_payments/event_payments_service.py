@@ -66,8 +66,21 @@ class EventPaymentsService(BaseService):
             amount = float(raw_value) if not isinstance(raw_value, (int, float)) else float(raw_value)
         except Exception as err:
             raise HTTPException(status_code=400, detail="Valor de tarifa inválido") from err
-        if amount <= 0:
-            raise HTTPException(status_code=400, detail="El monto de la tarifa debe ser mayor a 0")
+        if amount < 0:
+            raise HTTPException(status_code=400, detail="El monto de la tarifa no puede ser negativo")
+        if amount == 0:
+            await self.payments_repository.update_provider_fields(
+                payment_id,
+                {
+                    "amount": 0.0,
+                    "currency": "ARS",
+                },
+            )
+            await self.update_payment_status(payment_id, PaymentStatusSchema(status=PaymentStatus.APPROVED))
+            return {
+                "payment_id": payment_id,
+                "free": True,
+            }
         if not self._settings.API_BASE_URL:
             raise HTTPException(status_code=500, detail="MERCADOPAGO_API_BASE_URL no configurado en el backend")
         api_base = self._settings.API_BASE_URL.rstrip("/")

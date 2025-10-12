@@ -77,6 +77,26 @@ class ProviderService(BaseService):
         logger.info("Getting account status for event", extra={"event_id": str(event_id)})
         account = await self.provider_account_repository.get_by_event_id(event_id)
         if not account:
+            try:
+                event = await self.events_repository.get(event_id)
+                pricing = getattr(event, "pricing", None) or []
+                event_is_free = isinstance(pricing, list) and len(pricing) == 1 and ((pricing[0] or {}).get("value") == 0)
+                if event_is_free:
+                    free_provider = {
+                        "id": "00000000-0000-0000-0000-000000000000",
+                        "user_id": "free",
+                        "provider": "free",
+                        "access_token": "",
+                        "refresh_token": "",
+                        "public_key": "",
+                        "account_id": "free",
+                        "marketplace_fee": 0.0,
+                        "marketplace_fee_type": "percentage",
+                        "account_status": "ACTIVE",
+                    }
+                    return ProviderAccountResponseSchema(**free_provider)
+            except Exception:
+                logger.exception("Error evaluando proveedor free por evento gratuito", extra={"event_id": str(event_id)})
             if settings.ENABLE_ENV_PROVIDER_FALLBACK and settings.ACCESS_TOKEN and settings.PUBLIC_KEY:
                 fallback = {
                     "id": "00000000-0000-0000-0000-000000000000",
