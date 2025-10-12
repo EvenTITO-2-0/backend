@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 
+import time
 from app.authorization.admin_user_dep import IsAdminUsrDep
 from app.authorization.organizer_dep import IsOrganizerDep
+from app.authorization.chair_dep import IsChairDep
 from app.authorization.util_dep import or_
 from app.routers.events.configuration.dates import dates_configuration_router
 from app.routers.events.configuration.general import general_configuration_router
@@ -24,3 +26,11 @@ async def get_event_configuration(
 ) -> EventConfigurationSchema:
     event = await events_configuration_service.get_configuration()
     return event
+
+
+@events_configuration_router.get(
+    path="/slots", status_code=201
+)
+async def create_event_slots() -> None:
+    time.sleep(5)
+    return
