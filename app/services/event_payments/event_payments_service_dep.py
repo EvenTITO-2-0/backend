@@ -6,6 +6,7 @@ from fastapi import Depends
 from app.authorization.caller_id_dep import CallerIdDep
 from app.repository.events_repository import EventsRepository
 from app.repository.payments_repository import PaymentsRepository
+from app.repository.inscriptions_repository import InscriptionsRepository
 from app.repository.provider_account_repository import ProviderAccountRepository
 from app.repository.repository import get_repository
 from app.services.event_payments.event_payments_service import EventPaymentsService
@@ -19,6 +20,7 @@ class EventPaymentsServiceChecker:
         caller_id: CallerIdDep,
         storage_service: EventInscriptionStorageServiceDep,
         payments_repository: Annotated[PaymentsRepository, Depends(get_repository(PaymentsRepository))],
+        inscriptions_repository: Annotated[InscriptionsRepository, Depends(get_repository(InscriptionsRepository))],
         provider_account_repository: Annotated[
             ProviderAccountRepository, Depends(get_repository(ProviderAccountRepository))
         ],
@@ -27,6 +29,7 @@ class EventPaymentsServiceChecker:
         return EventPaymentsService(
             storage_service,
             payments_repository,
+            inscriptions_repository,
             provider_account_repository,
             events_repository,
             event_id,
@@ -40,6 +43,7 @@ class EventPaymentsServiceWebhookChecker:
         event_id: UUID,
         storage_service: EventInscriptionStorageServiceDep,
         payments_repository: Annotated[PaymentsRepository, Depends(get_repository(PaymentsRepository))],
+        inscriptions_repository: Annotated[InscriptionsRepository, Depends(get_repository(InscriptionsRepository))],
         provider_account_repository: Annotated[
             ProviderAccountRepository, Depends(get_repository(ProviderAccountRepository))
         ],
@@ -48,6 +52,7 @@ class EventPaymentsServiceWebhookChecker:
         return EventPaymentsService(
             storage_service,
             payments_repository,
+            inscriptions_repository,
             provider_account_repository,
             events_repository,
             event_id,
