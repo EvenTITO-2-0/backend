@@ -5,11 +5,14 @@ from fastapi import HTTPException
 from mercadopago import SDK
 
 from app.database.models.payment import PaymentStatus
+from app.database.models.inscription import InscriptionStatus
 from app.exceptions.payments_exceptions import PaymentNotFound
 from app.repository.events_repository import EventsRepository
 from app.repository.payments_repository import PaymentsRepository
+from app.repository.inscriptions_repository import InscriptionsRepository
 from app.repository.provider_account_repository import ProviderAccountRepository
 from app.schemas.payments.payment import PaymentRequestSchema, PaymentResponseSchema, PaymentStatusSchema
+from app.schemas.inscriptions.inscription import InscriptionStatusSchema
 from app.schemas.users.utils import UID
 from app.services.services import BaseService
 from app.services.storage.event_inscription_storage_service import EventInscriptionStorageService
@@ -23,6 +26,7 @@ class EventPaymentsService(BaseService):
         self,
         storage_service: EventInscriptionStorageService,
         payments_repository: PaymentsRepository,
+        inscriptions_repository: InscriptionsRepository,
         provider_account_repository: ProviderAccountRepository,
         events_repository: EventsRepository,
         event_id: UUID,
@@ -30,6 +34,7 @@ class EventPaymentsService(BaseService):
     ):
         self.storage_service = storage_service
         self.payments_repository = payments_repository
+        self.inscriptions_repository = inscriptions_repository
         self.provider_account_repository = provider_account_repository
         self.events_repository = events_repository
         self.event_id = event_id
@@ -304,4 +309,15 @@ class EventPaymentsService(BaseService):
         update_ok = await self.payments_repository.update_status(self.event_id, payment_id, new_status)
         if not update_ok:
             raise PaymentNotFound(self.event_id, payment_id)
+
+        if new_status.status == PaymentStatus.APPROVED:
+            inscription_id = await self.payments_repository.get_inscription_id_by_payment_id(
+                self.event_id, payment_id
+            )
+            if inscription_id:
+                await self.inscriptions_repository.update_status(
+                    self.event_id,
+                    inscription_id,
+                    InscriptionStatusSchema(status=InscriptionStatus.APPROVED),
+                )
         return

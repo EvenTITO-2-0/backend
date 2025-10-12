@@ -65,6 +65,11 @@ class PaymentsRepository(Repository):
         obj = await self._get_with_conditions(conditions)
         return getattr(obj, "id", None)
 
+    async def get_inscription_id_by_payment_id(self, event_id: UUID, payment_id: UUID) -> UUID | None:
+        conditions = [PaymentModel.event_id == event_id, PaymentModel.id == payment_id]
+        obj = await self._get_with_conditions(conditions)
+        return getattr(obj, "inscription_id", None)
+
     async def _get_payments(self, conditions, offset: int, limit: int) -> list[PaymentResponseSchema]:
         res = await self._get_many_with_conditions(conditions, offset, limit)
         payments = []
