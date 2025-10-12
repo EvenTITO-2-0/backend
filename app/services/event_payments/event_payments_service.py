@@ -4,15 +4,19 @@ from uuid import UUID
 from fastapi import HTTPException
 from mercadopago import SDK
 
-from app.database.models.payment import PaymentStatus
 from app.database.models.inscription import InscriptionStatus
+from app.database.models.payment import PaymentStatus
 from app.exceptions.payments_exceptions import PaymentNotFound
 from app.repository.events_repository import EventsRepository
-from app.repository.payments_repository import PaymentsRepository
 from app.repository.inscriptions_repository import InscriptionsRepository
+from app.repository.payments_repository import PaymentsRepository
 from app.repository.provider_account_repository import ProviderAccountRepository
-from app.schemas.payments.payment import PaymentRequestSchema, PaymentResponseSchema, PaymentStatusSchema
 from app.schemas.inscriptions.inscription import InscriptionStatusSchema
+from app.schemas.payments.payment import (
+    PaymentRequestSchema,
+    PaymentResponseSchema,
+    PaymentStatusSchema,
+)
 from app.schemas.users.utils import UID
 from app.services.services import BaseService
 from app.services.storage.event_inscription_storage_service import EventInscriptionStorageService
