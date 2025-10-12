@@ -5,12 +5,14 @@ from fastapi import Depends
 
 from app.authorization.caller_id_dep import CallerIdDep
 from app.repository.events_repository import EventsRepository
-from app.repository.payments_repository import PaymentsRepository
 from app.repository.inscriptions_repository import InscriptionsRepository
+from app.repository.payments_repository import PaymentsRepository
 from app.repository.provider_account_repository import ProviderAccountRepository
 from app.repository.repository import get_repository
 from app.services.event_payments.event_payments_service import EventPaymentsService
-from app.services.storage.event_inscription_storage_service_dep import EventInscriptionStorageServiceDep
+from app.services.storage.event_inscription_storage_service_dep import (
+    EventInscriptionStorageServiceDep,
+)
 
 
 class EventPaymentsServiceChecker:
