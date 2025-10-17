@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, ForeignKey, String
+from sqlalchemy import Integer, DateTime
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, relationship
 
-from app.database.models.base import Base
+from .base import Base
 
 
 class EventRoomSlotModel(Base):
@@ -14,3 +16,4 @@ class EventRoomSlotModel(Base):
     start = Column(DateTime(timezone=True), nullable=False)
     end = Column(DateTime(timezone=True), nullable=False)
 
+    event = relationship("EventModel", back_populates="event_slots")
