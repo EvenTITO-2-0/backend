@@ -328,10 +328,30 @@ class EventPaymentsService(BaseService):
             raise PaymentNotFound(self.event_id, payment_id)
 
         if new_status.status == PaymentStatus.APPROVED:
-            inscription_id = await self.payments_repository.get_inscription_id_by_payment_id(
-                self.event_id, payment_id
-            )
-            if inscription_id:
+            # Traer el pago para conocer tarifa e inscripción
+            payment_row = await self.payments_repository.get_payment_row(self.event_id, payment_id)
+            if not payment_row:
+                raise PaymentNotFound(self.event_id, payment_id)
+
+            fare_name = getattr(payment_row, "fare_name", None)
+            inscription_id = getattr(payment_row, "inscription_id", None)
+
+            # Determinar si la tarifa requiere verificación manual
+            need_verification = False
+            try:
+                event = await self.events_repository.get(self.event_id)
+                pricing = getattr(event, "pricing", None) or []
+                if fare_name:
+                    for f in pricing:
+                        if (f or {}).get("name") == fare_name:
+                            need_verification = bool((f or {}).get("need_verification"))
+                            break
+            except Exception:
+                # Si algo falla al obtener pricing, ser conservador: no autoaprobar
+                need_verification = True
+
+            # Solo autoaprobar inscripción si la tarifa NO requiere verificación
+            if inscription_id and not need_verification:
                 await self.inscriptions_repository.update_status(
                     self.event_id,
                     inscription_id,

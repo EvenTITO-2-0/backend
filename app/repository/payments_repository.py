@@ -42,6 +42,10 @@ class PaymentsRepository(Repository):
             last_update=payment.last_update,
         )
 
+    async def get_payment_row(self, event_id: UUID, payment_id: UUID):
+        conditions = [PaymentModel.event_id == event_id, PaymentModel.id == payment_id]
+        return await self._get_with_conditions(conditions)
+
     async def get_payments_for_inscription(
         self, event_id: UUID, inscription_id: UUID, offset: int, limit: int
     ) -> list[PaymentResponseSchema]:
