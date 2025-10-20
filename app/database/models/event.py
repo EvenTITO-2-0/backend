@@ -55,5 +55,5 @@ class EventModel(ModelTemplate, Base):
         "EventRoomSlotModel",
         back_populates="event",
         cascade="all, delete-orphan",
-        lazy=False
+        lazy="selectin"
     )

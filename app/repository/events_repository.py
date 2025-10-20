@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database.models.chair import ChairModel
 from app.database.models.event import EventModel, EventStatus
@@ -91,51 +92,59 @@ class EventsRepository(Repository):
             .order_by(EventModel.creation_date.desc())
         ).subquery()
 
-        query = select(
-            EventModel,
-            select(InscriptionModel.roles)
-            .where((InscriptionModel.event_id == EventModel.id) & (InscriptionModel.user_id == user_id))
-            .label("inscription_roles"),
-            select(1)
-            .where((OrganizerModel.event_id == EventModel.id) & (OrganizerModel.user_id == user_id))
-            .exists()
-            .label("is_organizer"),
-            select(1)
-            .where((ChairModel.event_id == EventModel.id) & (ChairModel.user_id == user_id))
-            .exists()
-            .label("is_chair"),
-            select(1)
-            .where((ReviewerModel.event_id == EventModel.id) & (ReviewerModel.user_id == user_id))
-            .exists()
-            .label("is_reviewer"),
-        ).join(event_ids_subquery, EventModel.id == event_ids_subquery.c.id)
+        query = (
+            select(
+                EventModel,
+                select(InscriptionModel.roles)
+                .where((InscriptionModel.event_id == EventModel.id) & (InscriptionModel.user_id == user_id))
+                .label("inscription_roles"),
+                select(1)
+                .where((OrganizerModel.event_id == EventModel.id) & (OrganizerModel.user_id == user_id))
+                .exists()
+                .label("is_organizer"),
+                select(1)
+                .where((ChairModel.event_id == EventModel.id) & (ChairModel.user_id == user_id))
+                .exists()
+                .label("is_chair"),
+                select(1)
+                .where((ReviewerModel.event_id == EventModel.id) & (ReviewerModel.user_id == user_id))
+                .exists()
+                .label("is_reviewer"),
+            )
+            .join(event_ids_subquery, EventModel.id == event_ids_subquery.c.id)
+            .options(selectinload(EventModel.event_slots))
+        )
 
         result = await self.session.execute(query)
-        events_with_roles = result.all()
+        events_with_roles_results = result.all()
 
-        return [
-            PublicEventWithRolesSchema(
-                id=event.id,
-                title=event.title,
-                dates=event.dates,
-                description=event.description,
-                event_type=event.event_type,
-                location=event.location,
-                tracks=event.tracks,
-                status=event.status,
-                roles=[
-                    role
-                    for role, is_role in [
-                        (EventRole.ORGANIZER, is_organizer),
-                        (EventRole.CHAIR, is_chair),
-                        (EventRole.REVIEWER, is_reviewer),
-                    ]
-                    if is_role
-                ]
-                + ([EventRole(role) for role in inscription_roles] if inscription_roles else []),
-            )
-            for event, inscription_roles, is_organizer, is_chair, is_reviewer in events_with_roles
-        ]
+        events_map = {}
+        for event, inscription_roles, is_organizer, is_chair, is_reviewer in events_with_roles_results:
+            if event.id not in events_map:
+                roles = []
+                if is_organizer:
+                    roles.append(EventRole.ORGANIZER)
+                if is_chair:
+                    roles.append(EventRole.CHAIR)
+                if is_reviewer:
+                    roles.append(EventRole.REVIEWER)
+                if inscription_roles:
+                    roles.extend([EventRole(role) for role in inscription_roles])
+
+                events_map[event.id] = PublicEventWithRolesSchema(
+                    id=event.id,
+                    title=event.title,
+                    dates=event.dates,
+                    description=event.description,
+                    event_type=event.event_type,
+                    location=event.location,
+                    tracks=event.tracks,
+                    status=event.status,
+                    event_slots=event.event_slots,
+                    roles=roles,
+                )
+
+        return list(events_map.values())
 
     async def get_all_events(
         self, offset: int, limit: int, status: EventStatus | None, title_search: str | None
