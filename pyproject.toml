@@ -81,3 +81,4 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]        # Allow unused imports in __init__.py files
 "tests/*" = ["F841"]            # Allow unused variables in test files
+"app/services/event_payments/event_payments_service.py" = ["C901"]  # Allow higher complexity for this service method

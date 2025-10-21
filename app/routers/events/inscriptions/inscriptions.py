@@ -116,7 +116,6 @@ async def pay_inscription(
     if isinstance(payment_data, dict) and payment_data.get("upload_url") is not None:
         return PaymentUploadSchema(id=payment_data.get("payment_id"), upload_url=payment_data.get("upload_url"))
 
-
     if isinstance(payment_data, dict) and payment_data.get("free"):
         return {"payment_id": payment_data.get("payment_id"), "free": True}
 
