@@ -2,7 +2,7 @@ from logging import getLogger
 from typing import Annotated
 from uuid import UUID
 
-import requests
+import requests  # type: ignore[import-untyped]
 from fastapi import Path
 
 from app.exceptions.provider_exceptions import (

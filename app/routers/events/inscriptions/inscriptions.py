@@ -101,6 +101,7 @@ class PaymentCheckoutSchema(BaseModel):
     checkout_url: str
     preference_id: str | None = None
 
+
 class PaymentFreeSchema(BaseModel):
     payment_id: UUID
     free: bool = True
