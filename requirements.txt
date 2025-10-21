@@ -10,3 +10,4 @@ pydantic-settings
 pydantic[email]
 pendulum
 psycopg2-binary
+mercadopago==2.2.0

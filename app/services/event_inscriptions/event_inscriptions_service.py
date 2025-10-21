@@ -20,8 +20,7 @@ from app.schemas.inscriptions.inscription import (
 from app.schemas.payments.payment import (
     PaymentDownloadSchema,
     PaymentRequestSchema,
-    PaymentsResponseSchema,
-    PaymentUploadSchema,
+    PaymentResponseSchema,
 )
 from app.schemas.users.utils import UID
 from app.services.event_payments.event_payments_service import EventPaymentsService
@@ -110,7 +109,7 @@ class EventInscriptionsService(BaseService):
             raise MyInscriptionNotFound(self.event_id)
         return EventInscriptionsService.map_to_schema(inscription)
 
-    async def pay(self, inscription_id: UUID, payment_request: PaymentRequestSchema) -> PaymentUploadSchema:
+    async def pay(self, inscription_id: UUID, payment_request: PaymentRequestSchema) -> dict:
         my_inscription = await self.inscriptions_repository.get_user_inscription_by_id(
             self.user_id, self.event_id, inscription_id
         )
@@ -122,9 +121,8 @@ class EventInscriptionsService(BaseService):
         # si me manda works que la inscripcion sea de speaker
         # que exista la tarifa con el nombre de la que quiere pagar
         # limite de works a pagar harcodeado o que lo elija el organizador
-        payment_id = await self.events_payment_service.pay_inscription(inscription_id, payment_request)
-        upload_url = await self.storage_service.get_payment_upload_url(self.user_id, payment_id)
-        return PaymentUploadSchema(id=payment_id, upload_url=upload_url)
+        payment_data = await self.events_payment_service.pay_inscription(inscription_id, payment_request)
+        return payment_data
 
     async def is_my_inscription(self, inscription_id: UUID) -> bool:
         my_inscription = await self.inscriptions_repository.get_user_inscription_by_id(
@@ -134,7 +132,7 @@ class EventInscriptionsService(BaseService):
 
     async def get_inscription_payments(
         self, inscription_id: UUID, offset: int, limit: int
-    ) -> list[PaymentsResponseSchema]:
+    ) -> list[PaymentResponseSchema]:
         return await self.events_payment_service.get_inscription_payments(inscription_id, offset, limit)
 
     async def get_inscription_payment(self, inscription_id: UUID, payment_id: UUID) -> PaymentDownloadSchema:

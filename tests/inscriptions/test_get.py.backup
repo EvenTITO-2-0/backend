@@ -1,4 +1,3 @@
-import pytest
 from fastapi.encoders import jsonable_encoder
 
 from app.database.models.inscription import InscriptionStatus
@@ -87,7 +86,6 @@ async def test_get_affiliation(client, create_user, create_event_started, create
     assert inscription["download_url"]["download_url"] == "mocked-url-download"
 
 
-@pytest.mark.skip(reason="Requires Mercado Pago configuration")
 async def test_get_payment_url(
     client, create_user, create_event_started, create_work_from_user, create_speaker_inscription
 ):

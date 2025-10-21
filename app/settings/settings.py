@@ -18,6 +18,19 @@ class StorageSettings(BaseSettings):
     GCP_CREDENTIALS: str | None = None
 
 
+class MercadoPagoSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="MERCADOPAGO_")
+    PUBLIC_KEY: str | None = None
+    ACCESS_TOKEN: str | None = None
+    WEBHOOK_SECRET: str | None = None
+    FRONTEND_URL: str = "http://localhost:5173"
+    API_BASE_URL: str = ""
+    ENABLE_ENV_PROVIDER_FALLBACK: bool = False
+    MARKETPLACE_NAME: str = "TPP-2"
+    CLIENT_ID: str | None = None
+    CLIENT_SECRET: str | None = None
+
+
 # TODO: Validar que si ENABLE_SEND_EMAILS==True, entonces lo otro este setteado.
 class NotificationsSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="NOTIFICATIONS_")

@@ -1,7 +1,8 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from app.authorization.admin_user_dep import IsAdminUsrDep
 from app.authorization.inscripted_dep import IsRegisteredDep, verify_is_registered
@@ -18,7 +19,7 @@ from app.schemas.inscriptions.inscription import (
 from app.schemas.payments.payment import (
     PaymentDownloadSchema,
     PaymentRequestSchema,
-    PaymentsResponseSchema,
+    PaymentResponseSchema,
     PaymentUploadSchema,
 )
 from app.services.event_inscriptions.event_inscriptions_service_dep import EventInscriptionsServiceDep
@@ -95,31 +96,58 @@ async def update_inscription(
     return await inscriptions_service.update_inscription(inscription_id, inscription)
 
 
+class PaymentCheckoutSchema(BaseModel):
+    payment_id: UUID
+    checkout_url: str
+    preference_id: str | None = None
+
+
+class PaymentFreeSchema(BaseModel):
+    payment_id: UUID
+    free: bool = True
+
+
 @inscriptions_events_router.put(
     path="/{inscription_id}/pay",
     status_code=201,
-    response_model=PaymentUploadSchema,
+    response_model=PaymentUploadSchema | PaymentCheckoutSchema | PaymentFreeSchema,
     dependencies=[Depends(verify_is_registered)],
 )
 async def pay_inscription(
-    inscription_id: UUID, payment_request: PaymentRequestSchema, inscription_service: EventInscriptionsServiceDep
-) -> PaymentUploadSchema:
-    return await inscription_service.pay(inscription_id, payment_request)
+    inscription_id: UUID, payment_request: PaymentRequestSchema, inscriptions_service: EventInscriptionsServiceDep
+) -> PaymentUploadSchema | PaymentCheckoutSchema | PaymentFreeSchema:
+    payment_data = await inscriptions_service.pay(inscription_id, payment_request)
+
+    if isinstance(payment_data, dict) and payment_data.get("upload_url") is not None:
+        return PaymentUploadSchema(id=payment_data.get("payment_id"), upload_url=payment_data.get("upload_url"))
+
+    if isinstance(payment_data, dict) and payment_data.get("free"):
+        return PaymentFreeSchema(payment_id=payment_data.get("payment_id"))
+
+    checkout_url = payment_data.get("checkout_url") if isinstance(payment_data, dict) else None
+    if checkout_url:
+        return PaymentCheckoutSchema(
+            payment_id=payment_data.get("payment_id"),
+            checkout_url=checkout_url,
+            preference_id=payment_data.get("preference_id"),
+        )
+
+    raise HTTPException(status_code=502, detail="No se pudo generar la URL de pago")
 
 
 @inscriptions_events_router.get(
     path="/{inscription_id}/payments",
     status_code=200,
-    response_model=List[PaymentsResponseSchema],
+    response_model=List[PaymentResponseSchema],
     dependencies=[or_(IsOrganizerDep, IsRegisteredDep)],
 )
 async def read_inscription_payments(
     inscription_id: UUID,
-    inscription_service: EventInscriptionsServiceDep,
+    inscriptions_service: EventInscriptionsServiceDep,
     offset: int = 0,
     limit: int = Query(default=100, le=100),
-) -> List[PaymentsResponseSchema]:
-    return await inscription_service.get_inscription_payments(inscription_id, offset, limit)
+) -> List[PaymentResponseSchema]:
+    return await inscriptions_service.get_inscription_payments(inscription_id, offset, limit)
 
 
 @inscriptions_events_router.get(
@@ -129,9 +157,9 @@ async def read_inscription_payments(
     dependencies=[or_(IsOrganizerDep, IsRegisteredDep)],
 )
 async def read_inscription_payment(
-    payment_id: UUID, inscription_id: UUID, inscription_service: EventInscriptionsServiceDep
+    payment_id: UUID, inscription_id: UUID, inscriptions_service: EventInscriptionsServiceDep
 ) -> PaymentDownloadSchema:
-    return await inscription_service.get_inscription_payment(inscription_id, payment_id)
+    return await inscriptions_service.get_inscription_payment(inscription_id, payment_id)
 
 
 @inscriptions_events_router.patch(
@@ -139,7 +167,7 @@ async def read_inscription_payment(
 )
 async def change_inscription_status(
     inscription_id: UUID,
-    inscription_service: EventInscriptionsServiceDep,
+    inscriptions_service: EventInscriptionsServiceDep,
     status_modification: InscriptionStatusSchema,
 ):
-    await inscription_service.update_inscription_status(inscription_id, status_modification)
+    await inscriptions_service.update_inscription_status(inscription_id, status_modification)

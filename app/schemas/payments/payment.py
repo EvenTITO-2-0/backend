@@ -31,7 +31,7 @@ class PaymentWorkSchema(BaseModel):
     track: str = Field(examples=["Track"])
 
 
-class PaymentsResponseSchema(PaymentIdSchema, PaymentDatesResponseSchema):
+class PaymentResponseSchema(PaymentIdSchema, PaymentDatesResponseSchema):
     event_id: UUID
     inscription_id: UUID
     status: PaymentStatus
@@ -39,7 +39,7 @@ class PaymentsResponseSchema(PaymentIdSchema, PaymentDatesResponseSchema):
     works: list[PaymentWorkSchema] | None
 
 
-class PaymentDownloadSchema(PaymentsResponseSchema):
+class PaymentDownloadSchema(PaymentResponseSchema):
     model_config = ConfigDict(from_attributes=True)
     download_url: DownloadURLSchema | None = Field(default=None)
 
