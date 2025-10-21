@@ -2,7 +2,7 @@ from logging import getLogger
 from typing import Annotated
 from uuid import UUID
 
-import requests
+import requests  # type: ignore[import-untyped]
 from fastapi import Path
 
 from app.exceptions.provider_exceptions import (
@@ -80,7 +80,9 @@ class ProviderService(BaseService):
             try:
                 event = await self.events_repository.get(event_id)
                 pricing = getattr(event, "pricing", None) or []
-                event_is_free = isinstance(pricing, list) and len(pricing) == 1 and ((pricing[0] or {}).get("value") == 0)
+                event_is_free = (
+                    isinstance(pricing, list) and len(pricing) == 1 and ((pricing[0] or {}).get("value") == 0)
+                )
                 if event_is_free:
                     free_provider = {
                         "id": "00000000-0000-0000-0000-000000000000",
@@ -96,7 +98,9 @@ class ProviderService(BaseService):
                     }
                     return ProviderAccountResponseSchema(**free_provider)
             except Exception:
-                logger.exception("Error evaluando proveedor free por evento gratuito", extra={"event_id": str(event_id)})
+                logger.exception(
+                    "Error evaluando proveedor free por evento gratuito", extra={"event_id": str(event_id)}
+                )
             if settings.ENABLE_ENV_PROVIDER_FALLBACK and settings.ACCESS_TOKEN and settings.PUBLIC_KEY:
                 fallback = {
                     "id": "00000000-0000-0000-0000-000000000000",
