@@ -101,23 +101,27 @@ class PaymentCheckoutSchema(BaseModel):
     checkout_url: str
     preference_id: str | None = None
 
+class PaymentFreeSchema(BaseModel):
+    payment_id: UUID
+    free: bool = True
+
 
 @inscriptions_events_router.put(
     path="/{inscription_id}/pay",
     status_code=201,
-    response_model=PaymentUploadSchema | PaymentCheckoutSchema | dict,
+    response_model=PaymentUploadSchema | PaymentCheckoutSchema | PaymentFreeSchema,
     dependencies=[Depends(verify_is_registered)],
 )
 async def pay_inscription(
     inscription_id: UUID, payment_request: PaymentRequestSchema, inscriptions_service: EventInscriptionsServiceDep
-) -> PaymentUploadSchema | PaymentCheckoutSchema:
+) -> PaymentUploadSchema | PaymentCheckoutSchema | PaymentFreeSchema:
     payment_data = await inscriptions_service.pay(inscription_id, payment_request)
 
     if isinstance(payment_data, dict) and payment_data.get("upload_url") is not None:
         return PaymentUploadSchema(id=payment_data.get("payment_id"), upload_url=payment_data.get("upload_url"))
 
     if isinstance(payment_data, dict) and payment_data.get("free"):
-        return {"payment_id": payment_data.get("payment_id"), "free": True}
+        return PaymentFreeSchema(payment_id=payment_data.get("payment_id"))
 
     checkout_url = payment_data.get("checkout_url") if isinstance(payment_data, dict) else None
     if checkout_url:
