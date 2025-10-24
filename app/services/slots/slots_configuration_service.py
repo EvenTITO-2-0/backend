@@ -59,3 +59,11 @@ class SlotsConfigurationService(BaseService):
         event.mdata['was_configured'] = True
         await self.events_repository.update(self.event_id, {"mdata": event.mdata})
         logger.info(f"Finished configuring slots and rooms for event {self.event_id}")
+
+    async def delete_event_slots_and_rooms(self):
+        logger.info(f"Deleting slots and rooms for event {self.event_id}")
+        await self.slots_repository.delete_by_event_id(self.event_id)
+        event = await self.events_repository.get(self.event_id)
+        event.mdata['was_configured'] = False
+        await self.events_repository.update(self.event_id, {"mdata": event.mdata})
+        logger.info(f"Finished deleting slots and rooms for event {self.event_id}")

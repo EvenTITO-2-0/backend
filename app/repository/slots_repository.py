@@ -27,3 +27,17 @@ class SlotsRepository(Repository):
         self.session.add_all(entries)
         await self.session.flush()
         logger.info(f"Successfully added {len(entries)} event room slots to the session")
+
+    async def delete_by_event_id(self, event_id) -> None:
+        """
+        Deletes all EventRoomSlotModel entries associated with the given event_id.
+
+        Args:
+            event_id: The ID of the event whose slots are to be deleted.
+        """
+        logger.info(f"Deleting event room slots for event {event_id}")
+        await self.session.execute(
+            EventRoomSlotModel.__table__.delete().where(EventRoomSlotModel.event_id == event_id)
+        )
+        await self.session.flush()
+        logger.info(f"Successfully deleted event room slots for event {event_id}")

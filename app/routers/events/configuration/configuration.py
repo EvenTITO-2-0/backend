@@ -36,3 +36,9 @@ async def create_event_slots(slots_configuration_service: SlotsConfigurationServ
     await slots_configuration_service.configure_event_slots_and_rooms()
     time.sleep(2)
     return
+
+@events_configuration_router.delete(path="/slots", status_code=200)
+async def delete_event_slots(slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+    logger.info(f"Deleting slot and room configuration for event {slots_configuration_service.event_id}")
+    await slots_configuration_service.delete_event_slots_and_rooms()
+    return
