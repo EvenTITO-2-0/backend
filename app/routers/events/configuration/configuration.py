@@ -15,6 +15,8 @@ from app.schemas.events.configuration import EventConfigurationSchema
 from app.services.events.events_configuration_service_dep import EventsConfigurationServiceDep
 from app.services.slots.slots_configuration_service_dep import SlotsConfigurationServiceDep
 
+from backend.app.schemas.events.slot import SlotSchema
+
 events_configuration_router = APIRouter(prefix="/{event_id}/configuration", tags=["Events: Configuration"])
 
 events_configuration_router.include_router(dates_configuration_router)
@@ -41,4 +43,22 @@ async def create_event_slots(slots_configuration_service: SlotsConfigurationServ
 async def delete_event_slots(slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
     logger.info(f"Deleting slot and room configuration for event {slots_configuration_service.event_id}")
     await slots_configuration_service.delete_event_slots_and_rooms()
+    return
+
+@events_configuration_router.delete(path="/slots/{slot_id}", status_code=200)
+async def delete_event_slot(slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+    logger.info(f"Deleting slot for event {slots_configuration_service.event_id}")
+    await slots_configuration_service.delete_event_slots()
+    return
+
+@events_configuration_router.post(path="/slots", status_code=201)
+async def create_event_slot(new_slot: SlotSchema, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+    logger.info(f"Creating slot and room configuration for event {slots_configuration_service.event_id}")
+    await slots_configuration_service.create_event_slot(new_slot)
+    return
+
+@events_configuration_router.put(path="/slots/{slot_id}", status_code=200)
+async def update_event_slot(slot_id: str, new_slot: SlotSchema, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+    logger.info(f"Creating slot and room configuration for event {slots_configuration_service.event_id}")
+    await slots_configuration_service.update_event_slot(slot_id, new_slot)
     return
