@@ -1,7 +1,9 @@
 import logging
+from typing import Sequence
 
-from sqlalchemy import Sequence
+from sqlalchemy import select  # <-- ADD THIS
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload  # <-- ADD THIS
 
 from app.database.models.event_room_slot import EventRoomSlotModel
 from app.repository.crud_repository import Repository
@@ -41,3 +43,27 @@ class SlotsRepository(Repository):
         )
         await self.session.flush()
         logger.info(f"Successfully deleted event room slots for event {event_id}")
+
+    async def get_by_event_id_with_works(self, event_id: str) -> Sequence[EventRoomSlotModel]:
+        """
+        Fetches all slots for a given event, eagerly loading
+        the associated 'works' relationship for each slot.
+
+        Args:
+            event_id: The ID of the event to fetch slots for.
+
+        Returns:
+            A sequence of EventRoomSlotModel instances, with the
+            'works' attribute already populated.
+        """
+        logger.info(f"Fetching slots and associated works for event {event_id}")
+
+        stmt = (
+            select(EventRoomSlotModel)
+            .where(EventRoomSlotModel.event_id == event_id)
+            .options(selectinload(EventRoomSlotModel.work_links))
+        )
+
+        # 3. Execute and return the results
+        result = await self.session.scalars(stmt)
+        return result.unique().all()

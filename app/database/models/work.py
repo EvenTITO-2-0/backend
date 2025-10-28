@@ -42,3 +42,4 @@ class WorkModel(ModelTemplate, Base):
     __table_args__ = (UniqueConstraint("event_id", "title", name="event_id_title_uc"),)
 
     reviewers = relationship("ReviewerModel", back_populates="work", lazy=True)
+    slot_links = relationship("WorkSlotModel", back_populates="work", lazy=True)

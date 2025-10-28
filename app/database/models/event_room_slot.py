@@ -17,3 +17,4 @@ class EventRoomSlotModel(Base):
     end = Column(DateTime(timezone=True), nullable=False)
 
     event = relationship("EventModel", back_populates="event_slots")
+    work_links = relationship("WorkSlotModel", back_populates="slot", lazy=True)

@@ -53,11 +53,16 @@ async def delete_event_slot(slot_id: int, slots_configuration_service: SlotsConf
 async def create_event_slot(new_slot: SlotSchema, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
     logger.info(f"Creating slot and room configuration for event {slots_configuration_service.event_id}")
     await slots_configuration_service.create_event_slot(new_slot)
-    # Return minimal created slot representation
     return
 
 @events_configuration_router.put(path="/slots/{slot_id}", status_code=200)
 async def update_event_slot(slot_id: int, new_slot: SlotSchema, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
     logger.info(f"Updating slot {slot_id} for event {slots_configuration_service.event_id}")
     await slots_configuration_service.update_event_slot(slot_id, new_slot)
+    return
+
+@events_configuration_router.get(path="/slots/assign", status_code=200)
+async def assign_works_to_slots(slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+    logger.info(f"Assigning works to slots for event {slots_configuration_service.event_id}")
+    await slots_configuration_service.assign_works_to_slots()
     return

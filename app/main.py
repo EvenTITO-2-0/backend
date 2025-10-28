@@ -1,8 +1,15 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.events.events import events_router, global_provider_router
 from app.routers.users.users import users_router
+
+logging.basicConfig(
+    level=logging.INFO,  # Set the minimum level to log
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 app = FastAPI(
     title="Backend API",
