@@ -112,6 +112,12 @@ class SlotsConfigurationService(BaseService):
         logger.info(f"Updated slot {slot_id} for event {self.event_id}")
         return result
 
+    async def get_slots_with_works(self):
+        logger.info(f"Fetching slots with works for event {self.event_id}")
+        slots = await self.slots_repository.get_by_event_id_with_works(self.event_id)
+        logger.info(f"Fetched {len(slots)} slots with works for event {self.event_id}")
+        return slots
+
     async def assign_works_to_slots(self):
         MAX_WORKS_PER_SLOT = 3
         logger.info(f"Starting assignment of works to slots for event {self.event_id}")

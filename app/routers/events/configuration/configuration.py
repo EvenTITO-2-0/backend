@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter
 
 import time
+from typing import List
 from app.authorization.admin_user_dep import IsAdminUsrDep
 from app.authorization.organizer_dep import IsOrganizerDep
 from app.authorization.util_dep import or_
@@ -11,6 +12,7 @@ from app.routers.events.configuration.general import general_configuration_route
 from app.routers.events.configuration.pricing import pricing_configuration_router
 from app.routers.events.configuration.review_skeleton import review_skeleton_configuration_router
 from app.schemas.events.configuration import EventConfigurationSchema
+from app.schemas.events.slot_with_works import SlotWithWorksSchema
 from app.services.events.events_configuration_service_dep import EventsConfigurationServiceDep
 from app.services.slots.slots_configuration_service_dep import SlotsConfigurationServiceDep
 from app.schemas.events.slot import SlotSchema
@@ -66,3 +68,10 @@ async def assign_works_to_slots(slots_configuration_service: SlotsConfigurationS
     logger.info(f"Assigning works to slots for event {slots_configuration_service.event_id}")
     await slots_configuration_service.assign_works_to_slots()
     return
+
+@events_configuration_router.get(path="/slots/works", status_code=200)
+async def get_slots_with_works(slots_configuration_service: SlotsConfigurationServiceDep,) -> List[SlotWithWorksSchema]:
+    logger.info(f"Fetching slots with works for event {slots_configuration_service.event_id}")
+    slots = await slots_configuration_service.get_slots_with_works()
+    return slots
+
