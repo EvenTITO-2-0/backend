@@ -1,3 +1,4 @@
+from logging import getLogger
 from uuid import UUID
 
 from sqlalchemy import and_, update
@@ -11,6 +12,7 @@ from app.schemas.users.user import PublicUserSchema
 from app.schemas.users.utils import UID
 from app.schemas.works.review import ReviewCreateRequestSchema, ReviewPublishSchema, ReviewResponseSchema
 
+logger = getLogger(__name__)
 
 class ReviewsRepository(Repository):
     def __init__(self, session: AsyncSession):
@@ -79,8 +81,10 @@ class ReviewsRepository(Repository):
         return await self._update_with_conditions(conditions, review_update)
 
     async def publish_reviews(self, event_id: UUID, work_id: UUID, reviews_to_publish: ReviewPublishSchema) -> bool:
+        logger.info("Publishing reviews for work %s in event %s", work_id, event_id)
         reviews_ids = reviews_to_publish.reviews_to_publish
         if len(reviews_ids) == 0:
+            logger.error("No reviews to publish provided")
             return False
         update_work_query = (
             update(WorkModel)
@@ -88,12 +92,14 @@ class ReviewsRepository(Repository):
             .values(state=reviews_to_publish.new_work_status)
         )
         if reviews_to_publish.resend_deadline is not None:
+            logger.info("Setting new resend deadline for work %s in event %s", work_id, event_id)
             update_work_query.values(deadline_date=reviews_to_publish.resend_deadline)
 
         for review_id in reviews_ids:
             conditions = [ReviewModel.event_id == event_id, ReviewModel.work_id == work_id, ReviewModel.id == review_id]
             review = await self._get_with_conditions(conditions)
             if not review:
+                logger.error("Couldnt obtain review %s to publish for work %s in event %s", review_id, work_id, event_id)
                 return False
 
             update_review_query = update(ReviewModel).where(ReviewModel.id == review.id).values(shared=True)
@@ -106,6 +112,7 @@ class ReviewsRepository(Repository):
             await self.session.execute(update_submission_query)
         await self.session.execute(update_work_query)
         await self.session.commit()
+        logger.info("Successfully published reviews for work %s in event %s", work_id, event_id)
         return True
 
     async def _get_work_reviews(self, conditions, offset: int, limit: int) -> list[ReviewResponseSchema]:

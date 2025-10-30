@@ -22,7 +22,7 @@ from app.services.event_reviewers.event_reviewers_service_dep import EventReview
 event_reviewers_router = APIRouter(prefix="/{event_id}/reviewers", tags=["Events: Reviewers"])
 
 
-@event_reviewers_router.post(path="", status_code=201, dependencies=[or_(IsOrganizerDep, IsAdminUsrDep)])
+@event_reviewers_router.post(path="", status_code=201, dependencies=[or_(IsOrganizerDep, IsAdminUsrDep, IsChairDep)])
 async def add_reviewers(reviewers: ReviewerCreateRequestSchema, reviewer_service: EventReviewerServiceDep) -> None:
     return await reviewer_service.add_reviewers(reviewers)
 

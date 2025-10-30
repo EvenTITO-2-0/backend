@@ -10,6 +10,7 @@ from app.schemas.events.slot import SlotSchema
 
 from app.database.models.work import WorkStates
 from app.repository.works_repository import WorksRepository
+from app.repository.work_slot_repository import WorkSlotRepository
 
 from app.database.models import WorkSlotModel
 
@@ -18,11 +19,13 @@ logger = logging.getLogger(__name__)
 class SlotsConfigurationService(BaseService):
     def __init__(self, event_id: UUID, events_repository: EventsRepository,
                  slots_repository: SlotsRepository,
-                 works_repository: WorksRepository):
+                 works_repository: WorksRepository,
+                 work_slot_repository: WorkSlotRepository):
         self.event_id = event_id
         self.events_repository = events_repository
         self.slots_repository = slots_repository
         self.works_repository = works_repository
+        self.work_slot_repository = work_slot_repository
 
     async def configure_event_slots_and_rooms(self):
         logger.info(f"Configuring slots and rooms for event {self.event_id}")
@@ -108,101 +111,6 @@ class SlotsConfigurationService(BaseService):
         result = await self.slots_repository.update(slot_id, update_data)
         logger.info(f"Updated slot {slot_id} for event {self.event_id}")
         return result
-
-    # async def assign_works_to_slots(self):
-    #     logger.info(f"Assigning works to slots for event {self.event_id}")
-    #     # Traemos todos los trabajos para un evento
-    #     # traemos todos los slots para un evento
-    #     # asignamos los que no estan asignados segun algun criterio
-    #
-    #     # Placeholder for actual implementation
-    #     # This would involve fetching works and slots, then assigning them based on some criteria
-    #     logger.info(f"Finished assigning works to slots for event {self.event_id}")
-
-
-    async def assign_works_to_slots2(self):
-        """
-        Automatically assigns unassigned works to available slots for the event.
-
-        This logic implements a basic assignment strategy:
-        1. Fetches all slots that are designated for works ('slot' type)
-           and eagerly loads their currently assigned works.
-        2. Fetches all works for the event.
-        3. Filters both lists to find:
-           - Slots that are empty (capacity 0/1).
-           - Works that are 'APPROVED' and not yet assigned.
-        4. Performs a simple 1-to-1 assignment for as many pairs as possible.
-
-        Note: The actual creation of the WorkSlotModel link happens when
-        SQLAlchemy's Unit of Work (managed by your service/UoW layer)
-        flushes the session after appending to the 'slot.works' relationship.
-        """
-        logger.info(f"Starting assignment of works to slots for event {self.event_id}")
-
-        # 1. Fetch all slots for the event, along with their work assignments
-        # We use get_by_event_id_with_works to eagerly load `slot.works`
-        # This prevents N+1 queries when we check `len(slot.works)`.
-        try:
-            all_slots = await self.slots_repository.get_by_event_id_with_works(self.event_id)
-        except Exception as e:
-            logger.error(f"Failed to fetch slots for event {self.event_id}: {e}")
-            return
-
-        # 2. Fetch all works for the event.
-        # We use a high limit, but pagination might be needed for very large events.
-        try:
-            all_works = await self.works_repository.get_all_works_for_event(
-                self.event_id, offset=0, limit=5000
-            )
-        except Exception as e:
-            logger.error(f"Failed to fetch works for event {self.event_id}: {e}")
-            return
-
-        # 3. Filter slots to find only those that are empty and of type 'slot'
-        # This assumes a slot's capacity is 1.
-        available_slots = [
-            slot for slot in all_slots
-            if slot.slot_type == 'slot' and len(slot.work_links) == 0
-        ]
-
-        if not available_slots:
-            logger.warning(f"No available slots found for event {self.event_id}. Aborting assignment.")
-            return
-
-        # 4. Filter works to find only those that are approved and unassigned
-        # We check `len(work.slots)` (assuming this relationship exists from your model)
-        unassigned_works = [
-            work for work in all_works
-            if work.state == WorkStates.APPROVED and len(work.slots) == 0
-        ]
-
-        if not unassigned_works:
-            logger.info(f"No unassigned, approved works to process for event {self.event_id}.")
-            return
-
-        logger.info(f"Found {len(unassigned_works)} unassigned works and {len(available_slots)} available slots.")
-
-        # 5. Perform a simple 1-to-1 assignment
-        # We iterate over the shorter of the two lists to avoid an IndexError.
-        assignments_to_make = min(len(unassigned_works), len(available_slots))
-
-        for i in range(assignments_to_make):
-            work_to_assign = unassigned_works[i]
-            slot_to_fill = available_slots[i]
-
-            # By appending the WorkModel to the slot.works relationship,
-            # SQLAlchemy's ORM (via the association proxy or a direct
-            # association object) will handle creating the link in the
-            # 'work_slots' table when the session is flushed.
-            slot_to_fill.works.append(work_to_assign)
-
-            logger.info(f"Assigning work {work_to_assign.id} ('{work_to_assign.title}') to slot {slot_to_fill.id}")
-
-        # The session flush/commit is handled by the Unit of Work (UoW)
-        # pattern that this service is likely part of.
-        logger.info(f"Finished assigning {assignments_to_make} works to slots. Awaiting session commit.")
-        self.slots_repository.bulk_create_work_slots()
-
 
     async def assign_works_to_slots(self):
         MAX_WORKS_PER_SLOT = 3
@@ -291,10 +199,12 @@ class SlotsConfigurationService(BaseService):
 
                 # Constraint 1: Slot Purity. Can this slot accept this track?
                 if slot_track and slot_track != track:
+                    logger.debug(f"Exited in Constraint slot purity")
                     continue  # Slot is already assigned to a different track
 
                 # Constraint: Capacity. Is this slot full?
                 if current_fill >= total_capacity:
+                    logger.debug(f"Exited in Constraint capacity")
                     continue  # Slot is full
 
                 # Constraint 2: Track Overlap.
@@ -307,9 +217,11 @@ class SlotsConfigurationService(BaseService):
                     # Check for overlap: (StartA < EndB) and (EndA > StartB)
                     if (slot.start < existing_end and slot.end > existing_start) and not is_same_slot:
                         is_overlapping = True
+                        logger.debug(f"Exited in Constraint track overlap")
                         break  # This slot overlaps with another for the same track
 
                 if is_overlapping:
+                    logger.debug(f"Slot {slot.id} ({slot.start} - {slot.end}) overlaps with existing slot for track '{track}'")
                     continue  # Can't use this slot
 
                 # --- If all checks pass, assign works ---
@@ -327,6 +239,7 @@ class SlotsConfigurationService(BaseService):
 
                     # Update our tracking data *immediately*
                     if slot.id not in slot_assignments:
+                        logger.debug(f"Initializing slot assignment tracking for slot {slot.id}")
                         # This is the first time we're using this slot
                         slot_assignments[slot.id] = {"track": track, "work_count": 0}
                         # Add to schedule only when we first assign to it
@@ -338,6 +251,7 @@ class SlotsConfigurationService(BaseService):
                     current_work = next(work_iterator, None)
 
             if current_work:
+                logger.warning(f"Not all works for track '{track}' could be assigned. Remaining work ID: {current_work.id}")
                 # If we finished iterating all slots and still have work, log a warning
                 logger.warning(f"Could not find slots for all works in track '{track}'. Work {current_work.id} and possibly others remain unassigned.")
 
@@ -345,8 +259,9 @@ class SlotsConfigurationService(BaseService):
         if new_links_to_create:
             logger.info(f"Committing {len(new_links_to_create)} new work-slot assignments.")
             # We use the session from one of our repositories
-            self.slots_repository.session.add_all(new_links_to_create)
-            await self.slots_repository.session.flush()
+            self.work_slot_repository.session.add_all(new_links_to_create)
+            await self.work_slot_repository.session.flush()
+            await self.work_slot_repository.session.commit()
         else:
             logger.info("No new work-slot assignments were needed.")
 
