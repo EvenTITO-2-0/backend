@@ -33,18 +33,31 @@ class SlotsRepository(Repository):
 
     async def delete_by_event_id(self, event_id) -> None:
         """
-        Deletes all EventRoomSlotModel entries associated with the given event_id.
-
-        Args:
-            event_id: The ID of the event whose slots are to be deleted.
+        Deletes all EventRoomSlotModel entries associated with the given event_id,
+        and also deletes their associated WorkSlotModel links.
         """
+        logger.info(f"Deleting work assignments for event {event_id}")
+
+        subquery = (
+            select(EventRoomSlotModel.id)
+            .where(EventRoomSlotModel.event_id == event_id)
+            .scalar_subquery()
+        )
+        await self.session.execute(
+            WorkSlotModel.__table__.delete().where(
+                WorkSlotModel.slot_id.in_(subquery)
+            )
+        )
+
         logger.info(f"Deleting event room slots for event {event_id}")
         await self.session.execute(
             EventRoomSlotModel.__table__.delete().where(EventRoomSlotModel.event_id == event_id)
         )
-        await self.session.flush()
-        logger.info(f"Successfully deleted event room slots for event {event_id}")
 
+        await self.session.flush()
+        logger.info(f"Successfully deleted all slots and associations for event {event_id}")
+
+    # --- END REPLACE ---
     async def get_by_event_id_with_works(self, event_id: str) -> Sequence[EventRoomSlotModel]:
         """
         Fetches all slots for a given event, eagerly loading
@@ -56,13 +69,10 @@ class SlotsRepository(Repository):
             select(EventRoomSlotModel)
             .where(EventRoomSlotModel.event_id == event_id)
             .options(
-                # This is the key change:
-                # Load the link, THEN load the work from the link
                 selectinload(EventRoomSlotModel.work_links)
                 .selectinload(WorkSlotModel.work)
             )
         )
 
-        # 3. Execute and return the results
         result = await self.session.scalars(stmt)
         return result.unique().all()

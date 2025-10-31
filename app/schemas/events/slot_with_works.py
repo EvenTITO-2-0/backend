@@ -1,5 +1,4 @@
-from pydantic import ConfigDict  # Use ConfigDict for Pydantic v2
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel, computed_field, Field  # <-- Import computed_field
 from datetime import datetime
 from uuid import UUID
 from typing import List
@@ -8,7 +7,10 @@ from typing import List
 class SlotWorkInfoSchema(BaseModel):
     id: UUID
     title: str
+    model_config = ConfigDict(from_attributes=True)
 
+class WorkSlotLinkSchema(BaseModel):
+    work: SlotWorkInfoSchema | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -19,21 +21,16 @@ class SlotWithWorksSchema(BaseModel):
     room_name: str
     slot_type: str
 
-    works: List[SlotWorkInfoSchema] = []
-
     model_config = ConfigDict(from_attributes=True)
 
-    @classmethod
-    def model_validate(cls, obj, **kwargs):
-        works_list = [
-            SlotWorkInfoSchema.model_validate(link.work)
-            for link in obj.work_links if link.work
+    work_links: List[WorkSlotLinkSchema] = Field(default=[], exclude=True)
+
+    @computed_field
+    @property
+    def works(self) -> List[SlotWorkInfoSchema]:
+        if not self.work_links:
+            return []
+
+        return [
+            link.work for link in self.work_links if link.work
         ]
-        return super().model_validate({
-            "id": obj.id,
-            "start": obj.start,
-            "end": obj.end,
-            "room_name": obj.room_name,
-            "slot_type": obj.slot_type,
-            "works": works_list
-        }, **kwargs)

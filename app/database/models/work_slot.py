@@ -14,7 +14,7 @@ class WorkSlotModel(DateTemplate, Base):
     work_id = Column(UUID(as_uuid=True), ForeignKey("works.id"), nullable=False, primary_key=True)
 
     slot = relationship("EventRoomSlotModel", back_populates="work_links")
-    work = relationship("WorkModel", back_populates="slot_links")
+    work = relationship("WorkModel", back_populates="slot_links", lazy="selectin")
 
     __table_args__ = (
         UniqueConstraint('slot_id', 'work_id', name='_slot_work_uc'),

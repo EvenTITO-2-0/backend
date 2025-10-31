@@ -34,7 +34,7 @@ class SlotsConfigurationService(BaseService):
         rooms = event.mdata.get('rooms', [])
         was_configured = event.mdata.get('was_configured', False)
         if was_configured:
-            return  # Already configured
+            return
 
         entries = []
         for slot in slots:
@@ -42,7 +42,6 @@ class SlotsConfigurationService(BaseService):
             slot_type = slot.get('type')
             start = slot.get('start')
             end = slot.get('end')
-            # Convert to datetime if needed
             if isinstance(start, str):
                 start = datetime.fromisoformat(start)
             if isinstance(end, str):
@@ -116,6 +115,7 @@ class SlotsConfigurationService(BaseService):
         logger.info(f"Fetching slots with works for event {self.event_id}")
         slots = await self.slots_repository.get_by_event_id_with_works(self.event_id)
         logger.info(f"Fetched {len(slots)} slots with works for event {self.event_id}")
+        logger.info(f"Slots obtained: {slots}")
         return slots
 
     async def assign_works_to_slots(self):
