@@ -7,6 +7,7 @@ from typing import List
 class SlotWorkInfoSchema(BaseModel):
     id: UUID
     title: str
+    track: str
     model_config = ConfigDict(from_attributes=True)
 
 class WorkSlotLinkSchema(BaseModel):
