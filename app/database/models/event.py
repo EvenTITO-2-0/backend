@@ -1,8 +1,7 @@
 from enum import Enum
 from typing import List
-from sqlalchemy import UUID
 
-from sqlalchemy import ARRAY, JSON, Column, ForeignKey, String
+from sqlalchemy import ARRAY, JSON, UUID, Column, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.models.base import Base

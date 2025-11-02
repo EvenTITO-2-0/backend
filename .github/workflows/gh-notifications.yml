@@ -1,0 +1,16 @@
+name: Discord Notifications - Simple
+
+on:
+  push:
+    branches: [ develop, main ]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+    - name: notify push
+      uses: Ilshidur/action-discord@master
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      with:
+        args: '🔔 **Push to `${{ github.repository }}`/`${{ github.ref_name }}`** made by ${{ github.actor }}: `${{ github.event.head_commit.message }}`'

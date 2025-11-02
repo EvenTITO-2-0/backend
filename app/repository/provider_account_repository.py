@@ -1,9 +1,11 @@
 # backend/app/repository/provider_account_repository.py
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_
+
 from app.database.models.provider_account import ProviderAccountModel
 from app.repository.crud_repository import Repository
+
 
 class ProviderAccountRepository(Repository):
     def __init__(self, session: AsyncSession):
@@ -24,7 +26,7 @@ class ProviderAccountRepository(Repository):
         ]
         return await self._get_with_conditions(conditions)
 
-    async def create(self, data: dict):
+    async def create_from_dict(self, data: dict):
         obj = self.model(**data)
         self.session.add(obj)
         await self.session.commit()

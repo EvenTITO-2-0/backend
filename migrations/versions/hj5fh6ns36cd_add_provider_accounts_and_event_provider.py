@@ -2,7 +2,7 @@
 """add provider accounts and event provider
 
 Revision ID: hj5fh6ns36cd
-Revises: 0.0.1
+Revises: 78fa13572a99
 Create Date: 2025-06-03
 
 """
@@ -24,8 +24,8 @@ def upgrade() -> None:
     op.create_table(
         'provider_accounts',
         sa.Column('id', UUID(as_uuid=True), nullable=False),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.Column('updated_at', sa.DateTime(), nullable=False),
+        sa.Column('creation_date', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
+        sa.Column('last_update', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
         sa.Column('user_id', sa.String(length=128), nullable=False),
         sa.Column('provider', sa.String(), nullable=False, server_default='mercadopago'),
         sa.Column('access_token', sa.String(), nullable=False),

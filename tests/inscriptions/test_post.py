@@ -1,5 +1,6 @@
 import uuid
 
+import pytest
 from fastapi.encoders import jsonable_encoder
 
 from app.database.models.inscription import InscriptionStatus
@@ -116,6 +117,7 @@ async def test_update_inscription(client, create_user, create_event_started, cre
     assert my_inscription["affiliation"] == "UTN"
 
 
+@pytest.mark.skip(reason="Requires Mercado Pago configuration")
 async def test_pay_inscription(
     client, create_user, create_event_started, create_work_from_user, create_speaker_inscription
 ):
