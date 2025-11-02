@@ -302,6 +302,7 @@ class SlotsConfigurationService(BaseService):
             reverse=True
         )
         # crear room preferenciales buscando works ya asignados
+        # TODO Revisar que el slot no tenga otra cosa cargada. Si hacemos eso hayq ue chequear que no se pise con el otro
         last_works_assigned = -1
         while last_works_assigned != len(new_links_to_create):
             last_works_assigned = len(new_links_to_create)
@@ -312,7 +313,11 @@ class SlotsConfigurationService(BaseService):
             )
             for track_name in sorted_track_names:
                 works = assignable_works_by_track[track_name]
-                room_with_most_space = sorted_rooms_names.pop()
+                if len(sorted_rooms_names) == 0:
+                    logger.info(f"All works for track '{track_name}' have been assigned.")
+                    break
+                room_with_most_space = sorted_rooms_names[-1]
+                has_assigned_least_one_work = False
                 # if available_slots_by_room[room_with_most_space] < len(works):
                 # handleGetRoomCombinationsThatMaximizeSpace()
                 slots_for_room = available_slots_by_room[room_with_most_space]
@@ -330,11 +335,14 @@ class SlotsConfigurationService(BaseService):
                             slot.available_space -= 1
                             available_spaces_by_room[room_with_most_space] -= 1
                             assigned = True
+                            has_assigned_least_one_work = True
                             break
                     if not assigned:
                         logger.warning(f"Could not find a slot with available space for work {work.id} in track '{track_name}'.")
                         unassigned_works_for_this_track.append(work)
 
+                if has_assigned_least_one_work:
+                    sorted_rooms_names.pop()
                 assignable_works_by_track[track_name] = unassigned_works_for_this_track
 
 
