@@ -76,3 +76,12 @@ class SlotsRepository(Repository):
 
         result = await self.session.scalars(stmt)
         return result.unique().all()
+
+    async def get_slots_by_event_id_with_works(self, event_id: str) -> Sequence[EventRoomSlotModel]:
+        logger.info(f"Fetching slots and associated work links for event {event_id}")
+        conditions = [EventRoomSlotModel.event_id == event_id, EventRoomSlotModel.slot_type == 'slot']
+        load_options = (
+            selectinload(EventRoomSlotModel.work_links)
+            .selectinload(WorkSlotModel.work)
+        )
+        return await self._get_many_with_conditions(conditions, offset=0, limit=1000, options=[load_options])

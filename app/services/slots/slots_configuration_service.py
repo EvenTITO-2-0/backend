@@ -119,7 +119,7 @@ class SlotsConfigurationService(BaseService):
         logger.info(f"Slots obtained: {slots}")
         return slots
 
-    async def assign_works_to_slots(self, parameters: AssignWorksParametersSchema):
+    async def assign_works_to_slots2(self, parameters: AssignWorksParametersSchema):
         logger.info(f"Starting assignment with parameters: {parameters}")
 
         if parameters.reset_previous_assignments:
@@ -135,8 +135,8 @@ class SlotsConfigurationService(BaseService):
         all_works = await self.works_repository.get_all_works_for_event(self.event_id, offset=0, limit=9999)
 
         # 3. Filter for assignable works (APPROVED) and available slots ('slot' type)
-        assignable_works = [w for w in all_works if w.state == WorkStates.APPROVED]
-        available_slots = [s for s in all_slots if s.slot_type == 'slot']
+        assignable_works = [w for w in all_works if w.state == WorkStates.APPROVED] # TODO obtenerlos asi de la bdd
+        available_slots = [s for s in all_slots if s.slot_type == 'slot'] # TODO obtenerlos asi de la bdd
         available_slots.sort(key=lambda s: s.start)
 
         logger.info(
@@ -157,7 +157,7 @@ class SlotsConfigurationService(BaseService):
                 slot_assignments[slot.id] = {"track": track, "work_count": work_count}
                 if track not in track_schedule:
                     track_schedule[track] = []
-                track_schedule[track].append((slot.start, slot.end))
+                track_schedule[track].append({"id": slot.id, "start": slot.start, "end": slot.end})
                 for link in slot.work_links:
                     assigned_work_ids.add(link.work.id)
 
@@ -220,8 +220,9 @@ class SlotsConfigurationService(BaseService):
 
                 # (Track Overlap constraint is correct)
                 is_overlapping = False
-                for existing_start, existing_end in track_schedule.get(track, []):
-                    is_same_slot = (slot.start == existing_start and slot.end == existing_end)
+                for existing_id, existing_start, existing_end in track_schedule.get(track, []):
+                    is_same_slot = slot.id == existing_id
+                    #is_same_slot = (slot.start == existing_start and slot.end == existing_end)
                     if (slot.start < existing_end and slot.end > existing_start) and not is_same_slot:
                         is_overlapping = True
                         break
@@ -247,6 +248,95 @@ class SlotsConfigurationService(BaseService):
             if current_work:
                 logger.warning(
                     f"Could not find slots for all works in track '{track}'. Work {current_work.id} and possibly others remain unassigned.")
+
+        # 7. Persist new assignments to the database
+        if new_links_to_create:
+            logger.info(f"Committing {len(new_links_to_create)} new work-slot assignments.")
+            self.work_slot_repository.session.add_all(new_links_to_create)
+            await self.work_slot_repository.session.flush()
+            await self.work_slot_repository.session.commit()
+        else:
+            logger.info("No new work-slot assignments were needed.")
+
+        logger.info(f"Finished assigning works to slots for event {self.event_id}")
+
+
+    async def assign_works_to_slots(self, parameters: AssignWorksParametersSchema):
+        logger.info(f"Starting assignment with parameters: {parameters}")
+
+        if parameters.reset_previous_assignments:
+            logger.info("Resetting previous assignments...")
+            await self.work_slot_repository.delete_by_event_id(self.event_id)
+
+        #all_slots = await self.slots_repository.get_by_event_id_with_works(self.event_id)
+        #available_slots = [s for s in all_slots if s.slot_type == 'slot'] # TODO obtenerlos asi de la bdd
+        available_slots = await self.slots_repository.get_slots_by_event_id_with_works(self.event_id)
+
+        #all_works = await self.works_repository.get_all_works_for_event(self.event_id, offset=0, limit=9999)
+        #assignable_works = [w for w in all_works if w.state == WorkStates.APPROVED] # TODO obtenerlos asi de la bdd
+        assignable_works = await self.works_repository.get_all_approved_works_for_event(self.event_id, offset=0, limit=9999)
+        logger.info(f"Found {len(assignable_works)} approved works and {len(available_slots)} available 'slot' type slots.")
+
+        new_links_to_create: list[WorkSlotModel] = []
+        available_slots_by_room = {}
+        available_spaces_by_room = {}
+        for slot in available_slots:
+            slot_duration_minutes = (slot.end - slot.start).total_seconds() / 60
+            total_capacity = int(slot_duration_minutes // parameters.time_per_work)
+            slot.available_space =  total_capacity - len(slot.work_links)
+            available_slots_by_room.setdefault(slot.room_name, []).append(slot)
+
+        for room_name in available_slots_by_room: # Ordenar por inicio
+            available_slots_by_room[room_name].sort(key=lambda s: s.start)
+
+        for room_name, slots in available_slots_by_room.items():
+            available_spaces_by_room[room_name] = sum(s.available_space for s in slots)
+
+        assignable_works_by_track = {}
+        for work in assignable_works:
+            assignable_works_by_track.setdefault(work.track, []).append(work)
+
+        sorted_track_names = sorted(
+            assignable_works_by_track.keys(),
+            key=lambda some_track_name: len(assignable_works_by_track[some_track_name]),
+            reverse=True
+        )
+        # crear room preferenciales buscando works ya asignados
+        last_works_assigned = -1
+        while last_works_assigned != len(new_links_to_create):
+            last_works_assigned = len(new_links_to_create)
+            sorted_rooms_names = sorted(
+                available_spaces_by_room.keys(),
+                key=available_spaces_by_room.get,
+                reverse=False
+            )
+            for track_name in sorted_track_names:
+                works = assignable_works_by_track[track_name]
+                room_with_most_space = sorted_rooms_names.pop()
+                # if available_slots_by_room[room_with_most_space] < len(works):
+                # handleGetRoomCombinationsThatMaximizeSpace()
+                slots_for_room = available_slots_by_room[room_with_most_space]
+
+                unassigned_works_for_this_track = []
+                for work in works:
+                    assigned = False
+                    for slot in slots_for_room:
+                        if slot.available_space > 0:
+                            logger.debug(
+                                f"Assigning work {work.id} (Track: {track_name}) to slot {slot.id} in room {room_with_most_space} (Available Space: {slot.available_space})")
+                            new_links_to_create.append(
+                                WorkSlotModel(slot_id=slot.id, work_id=work.id)
+                            )
+                            slot.available_space -= 1
+                            available_spaces_by_room[room_with_most_space] -= 1
+                            assigned = True
+                            break
+                    if not assigned:
+                        logger.warning(f"Could not find a slot with available space for work {work.id} in track '{track_name}'.")
+                        unassigned_works_for_this_track.append(work)
+
+                assignable_works_by_track[track_name] = unassigned_works_for_this_track
+
 
         # 7. Persist new assignments to the database
         if new_links_to_create:

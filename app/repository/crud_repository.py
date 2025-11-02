@@ -63,8 +63,11 @@ class Repository:
         await self.session.commit()
         return True
 
-    async def _get_many_with_conditions(self, conditions, offset: int, limit: int):
+    async def _get_many_with_conditions(self, conditions, offset: int, limit: int, options=None):
         query = select(self.model).where(and_(*conditions)).offset(offset).limit(limit)
+        if options:
+            for opt in options:
+                query = query.options(opt)
         result = await self.session.execute(query)
         return result.scalars().all()
 
