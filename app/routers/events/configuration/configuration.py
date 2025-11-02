@@ -11,6 +11,7 @@ from app.routers.events.configuration.dates import dates_configuration_router
 from app.routers.events.configuration.general import general_configuration_router
 from app.routers.events.configuration.pricing import pricing_configuration_router
 from app.routers.events.configuration.review_skeleton import review_skeleton_configuration_router
+from app.schemas.events.assing_works_parameters import AssignWorksParametersSchema
 from app.schemas.events.configuration import EventConfigurationSchema
 from app.schemas.events.slot_with_works import SlotWithWorksSchema
 from app.services.events.events_configuration_service_dep import EventsConfigurationServiceDep
@@ -63,10 +64,11 @@ async def update_event_slot(slot_id: int, new_slot: SlotSchema, slots_configurat
     await slots_configuration_service.update_event_slot(slot_id, new_slot)
     return
 
-@events_configuration_router.get(path="/slots/assign", status_code=200)
-async def assign_works_to_slots(slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+@events_configuration_router.post(path="/slots/assign", status_code=200)
+async def assign_works_to_slots(parameters: AssignWorksParametersSchema, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
     logger.info(f"Assigning works to slots for event {slots_configuration_service.event_id}")
-    await slots_configuration_service.assign_works_to_slots()
+    await slots_configuration_service.assign_works_to_slots(parameters)
+    time.sleep(1)
     return
 
 @events_configuration_router.get(path="/slots/works", status_code=200)

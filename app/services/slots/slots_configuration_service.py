@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.database.models.event_room_slot import EventRoomSlotModel
+from app.schemas.events.assing_works_parameters import AssignWorksParametersSchema
 from app.services.services import BaseService
 from app.repository.events_repository import EventsRepository
 from app.repository.slots_repository import SlotsRepository
@@ -118,58 +119,56 @@ class SlotsConfigurationService(BaseService):
         logger.info(f"Slots obtained: {slots}")
         return slots
 
-    async def assign_works_to_slots(self):
-        MAX_WORKS_PER_SLOT = 3
-        logger.info(f"Starting assignment of works to slots for event {self.event_id}")
-        logger.warning(f"Using hardcoded MAX_WORKS_PER_SLOT = {MAX_WORKS_PER_SLOT}")
+    async def assign_works_to_slots(self, parameters: AssignWorksParametersSchema):
+        logger.info(f"Starting assignment with parameters: {parameters}")
+
+        if parameters.reset_previous_assignments:
+            logger.info("Resetting previous assignments...")
+            await self.work_slot_repository.delete_by_event_id(self.event_id)
+            # Note: We don't need to re-fetch all_slots, as the slot.work_links
+            # will just be empty, which the algorithm handles.
 
         # 1. Fetch all slots, with their existing work links and works
-        # We assume get_by_event_id_with_works correctly eager loads
-        # slot.work_links and link.work.
         all_slots = await self.slots_repository.get_by_event_id_with_works(self.event_id)
 
         # 2. Fetch all works for the event
-        # Using a high limit to get all works, assuming no pagination needed here.
         all_works = await self.works_repository.get_all_works_for_event(self.event_id, offset=0, limit=9999)
 
         # 3. Filter for assignable works (APPROVED) and available slots ('slot' type)
         assignable_works = [w for w in all_works if w.state == WorkStates.APPROVED]
         available_slots = [s for s in all_slots if s.slot_type == 'slot']
-        available_slots.sort(key=lambda s: s.start)  # Sort slots chronologically
+        available_slots.sort(key=lambda s: s.start)
 
-        logger.info(f"Found {len(assignable_works)} approved works and {len(available_slots)} available 'slot' type slots.")
+        logger.info(
+            f"Found {len(assignable_works)} approved works and {len(available_slots)} available 'slot' type slots.")
 
-        # 4. Build helper data structures for existing assignments
+        # 4. Build helper data structures (this is correct, handles both reset=True/False)
         assigned_work_ids = set()
         slot_assignments = {}  # {slot_id: {"track": str, "work_count": int}}
         track_schedule = {}  # {track_name: list[(start_time, end_time)]}
 
         for slot in available_slots:
-            if slot.work_links:  # Assumes 'work_links' is loaded
-                # We assume the repo eager loaded the nested .work relationship
+            if slot.work_links:
+                # This logic is fine. If we reset, slot.work_links will be empty
+                # and this block will be skipped.
                 first_work = slot.work_links[0].work
                 track = first_work.track
                 work_count = len(slot.work_links)
-
                 slot_assignments[slot.id] = {"track": track, "work_count": work_count}
-
-                # Add to track schedule to check for overlaps
                 if track not in track_schedule:
                     track_schedule[track] = []
                 track_schedule[track].append((slot.start, slot.end))
-
                 for link in slot.work_links:
                     assigned_work_ids.add(link.work.id)
 
         logger.info(f"{len(assigned_work_ids)} works are already assigned.")
 
-        # 5. Group unassigned works by track
+        # 5. Group unassigned works by track (this is correct)
         unassigned_works_by_track = {}
         for work in assignable_works:
             if work.id not in assigned_work_ids:
                 unassigned_works_by_track.setdefault(work.track, []).append(work)
 
-        # Sort tracks to process those with more works first (a simple heuristic)
         sorted_tracks_to_assign = sorted(
             unassigned_works_by_track.items(),
             key=lambda item: len(item[1]),
@@ -179,20 +178,33 @@ class SlotsConfigurationService(BaseService):
         # 6. Assignment Logic
         new_links_to_create: list[WorkSlotModel] = []
 
+        time_per_work_minutes = parameters.time_per_work
+        if time_per_work_minutes <= 0:
+            logger.error("Time per work must be positive. Aborting assignment.")
+            return  # Or raise an exception
+
         for track, works_to_assign in sorted_tracks_to_assign:
             work_iterator = iter(works_to_assign)
             current_work = next(work_iterator, None)
-
             if not current_work:
-                continue  # No works to assign for this track
-
+                continue
             logger.info(f"Attempting to assign {len(works_to_assign)} works for track '{track}'")
 
             for slot in available_slots:
                 if not current_work:
-                    break  # All works for this track are assigned
+                    break
 
-                total_capacity = MAX_WORKS_PER_SLOT  # Using hardcoded value
+                slot_duration_seconds = (slot.end - slot.start).total_seconds()
+                slot_duration_minutes = slot_duration_seconds / 60
+
+                # Calculate capacity based on slot duration and time_per_work
+                total_capacity = int(slot_duration_minutes // time_per_work_minutes)
+
+                if total_capacity == 0:
+                    logger.warning(
+                        f"Slot {slot.id} is too short ({slot_duration_minutes} min) for works ({time_per_work_minutes} min). Skipping.")
+                    continue
+
                 current_fill = 0
                 slot_track = None
 
@@ -201,70 +213,44 @@ class SlotsConfigurationService(BaseService):
                     current_fill = assignment["work_count"]
                     slot_track = assignment["track"]
 
-                # --- Check Constraints ---
-
-                # Constraint 1: Slot Purity. Can this slot accept this track?
                 if slot_track and slot_track != track:
-                    logger.debug(f"Exited in Constraint slot purity")
-                    continue  # Slot is already assigned to a different track
-
-                # Constraint: Capacity. Is this slot full?
+                    continue
                 if current_fill >= total_capacity:
-                    logger.debug(f"Exited in Constraint capacity")
-                    continue  # Slot is full
+                    continue
 
-                # Constraint 2: Track Overlap.
-                # Does this slot overlap with another slot *already* assigned to this *same* track?
+                # (Track Overlap constraint is correct)
                 is_overlapping = False
                 for existing_start, existing_end in track_schedule.get(track, []):
-                    # Check if it's the *same* slot (which is fine)
                     is_same_slot = (slot.start == existing_start and slot.end == existing_end)
-
-                    # Check for overlap: (StartA < EndB) and (EndA > StartB)
                     if (slot.start < existing_end and slot.end > existing_start) and not is_same_slot:
                         is_overlapping = True
-                        logger.debug(f"Exited in Constraint track overlap")
-                        break  # This slot overlaps with another for the same track
-
+                        break
                 if is_overlapping:
-                    logger.debug(f"Slot {slot.id} ({slot.start} - {slot.end}) overlaps with existing slot for track '{track}'")
-                    continue  # Can't use this slot
+                    continue
 
-                # --- If all checks pass, assign works ---
                 remaining_capacity = total_capacity - current_fill
 
                 while remaining_capacity > 0 and current_work:
-                    logger.debug(f"Assigning work {current_work.id} (Track: {track}) to slot {slot.id} (Room: {slot.room_name})")
-
+                    logger.debug(
+                        f"Assigning work {current_work.id} (Track: {track}) to slot {slot.id} (Capacity: {current_fill}/{total_capacity})")
                     new_links_to_create.append(
                         WorkSlotModel(slot_id=slot.id, work_id=current_work.id)
                     )
-
                     remaining_capacity -= 1
                     current_fill += 1
-
-                    # Update our tracking data *immediately*
                     if slot.id not in slot_assignments:
-                        logger.debug(f"Initializing slot assignment tracking for slot {slot.id}")
-                        # This is the first time we're using this slot
                         slot_assignments[slot.id] = {"track": track, "work_count": 0}
-                        # Add to schedule only when we first assign to it
                         track_schedule.setdefault(track, []).append((slot.start, slot.end))
-
                     slot_assignments[slot.id]["work_count"] = current_fill
-
-                    # Get next work
                     current_work = next(work_iterator, None)
 
             if current_work:
-                logger.warning(f"Not all works for track '{track}' could be assigned. Remaining work ID: {current_work.id}")
-                # If we finished iterating all slots and still have work, log a warning
-                logger.warning(f"Could not find slots for all works in track '{track}'. Work {current_work.id} and possibly others remain unassigned.")
+                logger.warning(
+                    f"Could not find slots for all works in track '{track}'. Work {current_work.id} and possibly others remain unassigned.")
 
         # 7. Persist new assignments to the database
         if new_links_to_create:
             logger.info(f"Committing {len(new_links_to_create)} new work-slot assignments.")
-            # We use the session from one of our repositories
             self.work_slot_repository.session.add_all(new_links_to_create)
             await self.work_slot_repository.session.flush()
             await self.work_slot_repository.session.commit()
