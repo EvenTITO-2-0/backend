@@ -1,4 +1,5 @@
 from logging import getLogger
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -91,6 +92,11 @@ class EventPaymentsService(BaseService):
         }
         notification_url = f"{api_base}/events/{event.id}/provider/webhook"
         mp = SDK(access_token)
+        now_utc = datetime.now(timezone.utc)
+        expiration_from = now_utc.isoformat(timespec="seconds").replace("+00:00", "Z")
+        expiration_to = (now_utc + timedelta(minutes=self._settings.CHECKOUT_EXPIRES_MINUTES)).isoformat(
+            timespec="seconds"
+        ).replace("+00:00", "Z")
         preference_data = {
             "items": [
                 {
@@ -104,6 +110,10 @@ class EventPaymentsService(BaseService):
             "back_urls": back_urls,
             "auto_return": "approved",
             "notification_url": notification_url,
+            "expires": True,
+            "expiration_date_from": expiration_from,
+            "expiration_date_to": expiration_to,
+            "binary_mode": bool(self._settings.BINARY_MODE),
         }
         preference_response = mp.preference().create(preference_data)
         checkout_data = preference_response.get("response", {})
