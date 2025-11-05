@@ -120,6 +120,11 @@ class SlotsConfigurationService(BaseService):
         logger.info(f"Slots obtained: {slots}")
         return slots
 
+    async def delete_slot_work(self, work_id: UUID):
+        logger.info(f"Removing assignment for work {work_id}")
+        await self.work_slot_repository.remove_for_work_id(work_id)
+        logger.info(f"Removed assignment for work {work_id}")
+
     async def assign_works_to_slots2(self, parameters: AssignWorksParametersSchema):
         logger.info(f"Starting assignment with parameters: {parameters}")
 

@@ -39,3 +39,24 @@ class WorkSlotRepository(Repository):
 
         logger.info(f"Deleted {deleted_count} work-slot links.")
         return deleted_count
+
+    async def remove_for_work_id(self, work_id: UUID) -> int:
+        """
+        Deletes all work-slot links associated with a given work_id.
+        Returns the number of links deleted.
+        """
+        logger.info(f"Deleting all work-slot links for work {work_id}")
+
+        stmt = (
+            WorkSlotModel.__table__.delete()
+            .where(WorkSlotModel.work_id == work_id)
+            .returning(WorkSlotModel.work_id)
+        )
+
+        result = await self.session.execute(stmt)
+        deleted_count = len(result.all())
+        await self.session.flush()
+
+        logger.info(f"Deleted {deleted_count} work-slot links for work {work_id}.")
+        await self.session.commit()
+        return deleted_count

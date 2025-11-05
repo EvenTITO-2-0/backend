@@ -4,6 +4,9 @@ from fastapi import APIRouter
 
 import time
 from typing import List
+
+from sqlalchemy import UUID
+
 from app.authorization.admin_user_dep import IsAdminUsrDep
 from app.authorization.organizer_dep import IsOrganizerDep
 from app.authorization.util_dep import or_
@@ -76,4 +79,11 @@ async def get_slots_with_works(slots_configuration_service: SlotsConfigurationSe
     logger.info(f"Fetching slots with works for event {slots_configuration_service.event_id}")
     slots = await slots_configuration_service.get_slots_with_works()
     return slots
+
+@events_configuration_router.delete(path="/slots/works/{work_id}", status_code=200)
+async def delete_work_for_slot(work_id: str, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+    logger.info(f"Fetching slots with works for event {slots_configuration_service.event_id}")
+    await slots_configuration_service.delete_slot_work(work_id)
+    return
+
 
