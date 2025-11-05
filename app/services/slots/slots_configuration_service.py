@@ -265,7 +265,7 @@ class SlotsConfigurationService(BaseService):
         """
         (This is your main function from the class 'YourAssignmentService')
         """
-        logger.info(f"Starting optimal assignment with parameters: {parameters}")
+        logger.info(f"Starting new optimal assignment with parameters: {parameters}")
 
         # --- 1. Data Fetching ---
         if parameters.reset_previous_assignments:
@@ -283,9 +283,9 @@ class SlotsConfigurationService(BaseService):
         # --- 2. Define Penalties ---
         # You can customize these priorities
         penalties = CostPenalties(
-            unassigned_work=10000,  # Highest cost
-            per_distinct_day=100,
-            per_room_track_mix=10
+            unassigned_work=20,  # Highest cost
+            per_distinct_day=10,
+            per_room_track_mix=5
         )
 
         # --- 3. (Optional but Recommended) Run Greedy Algorithm ---
@@ -337,7 +337,6 @@ class SlotsConfigurationService(BaseService):
         }
 
 
-import logging
 import copy
 from datetime import timedelta, date
 from dataclasses import dataclass, field
@@ -354,82 +353,75 @@ class CostPenalties:
 @dataclass
 class SearchState:
     """
-    Holds the entire state of a single node in the B&B search tree.
+    MODIFIED: Holds the state for a slot-centric decision tree.
     """
-    work_index: int = 0
+    # We are now making a decision for the slot at this index
+    slot_index: int = 0
     current_cost: float = 0.0
 
-    # Solution being built
-    assignments: List[Tuple[WorkModel, EventRoomSlotModel]] = field(default_factory=list)
+    # Solution being built (maps slot.id -> track_name)
+    slot_track_map: Dict[int, str] = field(default_factory=dict)
 
     # Constraint tracking
+    # How many works for each track still need to be assigned
+    track_work_counts_remaining: Dict[str, int] = field(default_factory=dict)
+    # What time intervals are blocked for each track (to prevent parallel scheduling)
     track_time_usage: Dict[str, List[Tuple[date, date]]] = field(default_factory=dict)
-    slot_cursors: Dict[int, date] = field(default_factory=dict)
-    slot_available_space: Dict[int, int] = field(default_factory=dict)
 
     # Cost tracking
     days_used: Set[date] = field(default_factory=set)
-    room_track_map: Dict[str, Set[str]] = field(default_factory=dict)  # e.g. en la sala 1 esta "Track A" y "Track B"
-
-    slot_track_map: Dict[int, str] = field(default_factory=dict) # e.g. el slot 5 tiene asignado "Track A"
+    room_track_map: Dict[str, Set[str]] = field(default_factory=dict)
 
 
 class ConfigurableBBScheduler:
     """
-    A Branch and Bound scheduler that minimizes a configurable cost function
-    with a hard constraint against mixing tracks in a single slot.
+    MODIFIED: A Branch and Bound scheduler that decides which track
+    to assign to each slot.
     """
 
     def __init__(self, works: List[WorkModel], slots: List[EventRoomSlotModel],
                  time_per_work: int, penalties: CostPenalties):
 
-        self.penalties: CostPenalties
-        self.time_delta: timedelta
-        self.works_to_assign: List[WorkModel]
-        self.all_slots: List[EventRoomSlotModel]
-
         self.penalties = penalties
         self.time_delta = timedelta(minutes=time_per_work)
 
-        # Separo los trabajos por tracks
-        works_by_track = {}
+        # --- Store Track and Work info ---
+        self.works_by_track: Dict[str, List[WorkModel]] = {}
         for w in works:
-            works_by_track.setdefault(w.track, []).append(w)
+            self.works_by_track.setdefault(w.track, []).append(w)
 
-        # Se ordenan los tracks por cantidad de trabajos
-        sorted_tracks = sorted(works_by_track.keys(), key=lambda t: len(works_by_track[t]), reverse=True)
-        self.works_to_assign = [w for t in sorted_tracks for w in works_by_track[t]]
+        self.track_counts: Dict[str, int] = {
+            track: len(works_list)
+            for track, works_list in self.works_by_track.items()
+        }
+        self.total_works = len(works)
+        self.available_tracks = list(self.track_counts.keys())
 
-        # Ordenar salas por espacio disponible
-        self.available_slots_by_room = {}
-        room_total_space = {}
+        # --- Store Slot info ---
+        # Calculate true available space for each slot
         for slot in slots:
             slot_duration = (slot.end - slot.start).total_seconds() / 60
-            # Tener en cuenta links ya asignados (TODO revisar que funcione con links ya puestos)
+            # Note: available_space is the *original* capacity
             slot.available_space = int(slot_duration // time_per_work) - len(slot.work_links)
-            self.available_slots_by_room.setdefault(slot.room_name, []).append(slot)
-            room_total_space[slot.room_name] = room_total_space.get(slot.room_name, 0) + slot.available_space
 
-        for room_name in self.available_slots_by_room:
-            self.available_slots_by_room[room_name].sort(key=lambda s: s.start)
+        # Sort all slots. Heuristic: Sort by start time, then room.
+        # This groups slots together logically.
+        self.all_slots: List[EventRoomSlotModel] = sorted(slots, key=lambda s: (s.start, s.room_name))
+        self.slot_map: Dict[int, EventRoomSlotModel] = {s.id: s for s in self.all_slots}
+        self.total_slots = len(self.all_slots)
 
-        self.sorted_room_names = sorted(room_total_space.keys(), key=lambda r: room_total_space[r], reverse=True)
-        self.all_slots = slots
-
-        # Nodo raiz
-        self.total_works = len(self.works_to_assign)
+        # --- B&B Root Node ---
         self.global_best_cost = float('inf')
-        self.global_best_solution = []
+        self.global_best_solution: Dict[int, str] = {}  # Will be {slot_id: track_name}
 
         self.initial_state = SearchState(
-            slot_cursors={s.id: s.start for s in self.all_slots},
-            slot_available_space={s.id: s.available_space for s in self.all_slots}
+            # Start with the full count of works needed for each track
+            track_work_counts_remaining=copy.deepcopy(self.track_counts)
         )
 
     def solve(self, greedy_cost_bound=float('inf')):
         """
         Starts the B&B search.
-        A 'greedy_cost_bound' (from a greedy algorithm) is highly recommended.
         """
         logger.info(f"Starting B&B with initial cost bound: {greedy_cost_bound}")
         self.global_best_cost = greedy_cost_bound
@@ -437,7 +429,29 @@ class ConfigurableBBScheduler:
         self._search(self.initial_state)
 
         logger.info(f"B&B search complete. Optimal cost found: {self.global_best_cost}")
-        return self.global_best_solution, self.global_best_cost
+
+        # --- MODIFIED: Post-processing ---
+        # Convert the solution of {slot_id: track_name}
+        # back to List[(WorkModel, SlotModel)]
+        final_work_assignments = []
+        works_map_copy = {track: list(works) for track, works in self.works_by_track.items()}
+
+        for slot_id, track_name in self.global_best_solution.items():
+            slot = self.slot_map[slot_id]
+            # Get the *original* capacity of this slot
+            works_to_place_in_slot = slot.available_space
+
+            for _ in range(works_to_place_in_slot):
+                # Check if we still have works for this track
+                if works_map_copy[track_name]:
+                    work_obj = works_map_copy[track_name].pop()
+                    final_work_assignments.append((work_obj, slot))
+                else:
+                    # Slot had more space than the track had works,
+                    # so we stop filling it.
+                    break
+
+        return final_work_assignments, self.global_best_cost
 
     def _calculate_bound(self, state: SearchState) -> float:
         """
@@ -446,147 +460,119 @@ class ConfigurableBBScheduler:
         """
         current_cost = state.current_cost
 
-        # Calculate minimum cost for works not yet considered
-        works_remaining = self.total_works - state.work_index
-        total_remaining_space = sum(state.slot_available_space.values())
+        # Calculate minimum cost for works not yet assigned
+        works_still_needed = sum(state.track_work_counts_remaining.values())
 
-        future_unassigned_works = max(0, works_remaining - total_remaining_space)
+        # Calculate best-case future capacity
+        total_remaining_space = 0
+        for i in range(state.slot_index, self.total_slots):
+            total_remaining_space += self.all_slots[i].available_space
 
-        # This is the "bound": current cost + best possible future cost
-        # We assume 0 cost for future days/room-mixes (the optimistic part)
+        future_unassigned_works = max(0, works_still_needed - total_remaining_space)
+
+        # Bound = current cost + best possible future cost
         return current_cost + (future_unassigned_works * self.penalties.unassigned_work)
-
-    def _find_valid_placement(self, work: WorkModel, slot: EventRoomSlotModel, state: SearchState):
-        """
-        Helper to find the next valid start time, checking ALL constraints.
-        """
-        track = work.track
-
-        # --- FIX: HARD CONSTRAINT Check Slot/Track Assignment ---
-        assigned_track = state.slot_track_map.get(slot.id)
-        if assigned_track and assigned_track != track:
-            # This slot is already taken by a *different* track.
-            # It's impossible to place this work here.
-            return None
-            # --- End of New Constraint ---
-
-        # Constraint 1: Slot must have work capacity
-        if state.slot_available_space[slot.id] <= 0:
-            return None
-
-        current_time = state.slot_cursors[slot.id]
-
-        # Loop until we find a valid spot or run out of time
-        while True:
-            work_start = current_time
-            work_end = work_start + self.time_delta
-
-            # Constraint 2: Must fit within slot time boundaries
-            if work_end > slot.end:
-                return None  # This slot is full (timewise)
-
-            # Constraint 3: Must not overlap with same track (in any room)
-            is_conflict = False
-            for existing_start, existing_end in state.track_time_usage.get(track, []):
-                # Check for overlap: (StartA < EndB) and (EndA > StartB)
-                if work_start < existing_end and work_end > existing_start:
-                    is_conflict = True
-                    current_time = existing_end  # Jump cursor past the conflict
-                    break
-
-            if is_conflict:
-                continue  # Retry while-loop with new current_time
-
-            # All constraints passed!
-            return work_start, work_end
 
     def _search(self, state: SearchState):
         """
         The recursive core of the Branch and Bound algorithm.
+        Decides which track to assign to the slot at `state.slot_index`.
         """
 
-        optimistic_cost_bound = self._calculate_bound(state)
-        if optimistic_cost_bound >= self.global_best_cost:
-            logger.debug(f"Pruning branch: (Bound {optimistic_cost_bound} >= Best {self.global_best_cost})")
+        # --- 1. Base Case (Leaf Node) ---
+        # If we have made a decision for every slot...
+        if state.slot_index >= self.total_slots:
+            # We must add the cost of all works that *still* haven't been assigned
+            unassigned_works = sum(state.track_work_counts_remaining.values())
+            final_cost = state.current_cost + (unassigned_works * self.penalties.unassigned_work)
+
+            if final_cost < self.global_best_cost:
+                logger.info(f"New best solution found! Cost: {final_cost}")
+                self.global_best_cost = final_cost
+                self.global_best_solution = dict(state.slot_track_map)  # Store copy
             return
 
-        if state.work_index >= self.total_works:
-            # This is a complete solution.
-            if state.current_cost < self.global_best_cost:
-                logger.info(f"New best solution found! Cost: {state.current_cost}")
-                self.global_best_cost = state.current_cost
-                self.global_best_solution = list(state.assignments)  # Store copy
+        # --- 2. Pruning ---
+        optimistic_cost_bound = self._calculate_bound(state)
+        if optimistic_cost_bound >= self.global_best_cost:
+            # logger.info(f"Pruning branch...")
             return
 
         # --- 3. Branching ---
-        work_to_try = self.works_to_assign[state.work_index]
+        slot_to_try = self.all_slots[state.slot_index]
 
-        # --- Branch 1: Try to *assign* the work ---
-        for room_name in self.sorted_room_names:
-            for slot in self.available_slots_by_room[room_name]:
+        # --- Branch 1: Try to *assign a track* to this slot ---
+        # We can only assign tracks that still need works
+        tracks_with_remaining_works = [
+            t for t in self.available_tracks
+            if state.track_work_counts_remaining.get(t, 0) > 0
+        ]
 
-                placement = self._find_valid_placement(work_to_try, slot, state)
+        for track_name in tracks_with_remaining_works:
 
-                if placement:
-                    work_start, work_end = placement
+            # --- Constraint Check: Parallel Time Conflict ---
+            # Check if this track is already scheduled at this time
+            is_conflict = False
+            for existing_start, existing_end in state.track_time_usage.get(track_name, []):
+                # Check for overlap: (StartA < EndB) and (EndA > StartB)
+                if slot_to_try.start < existing_end and slot_to_try.end > existing_start:
+                    is_conflict = True
+                    break
 
-                    # --- Calculate Incremental Cost ---
-                    cost_increase = 0
-                    day = slot.start.date()
+            if is_conflict:
+                continue  # This track cannot be assigned to this slot
 
-                    is_new_day = day not in state.days_used
-                    if is_new_day:
-                        cost_increase += self.penalties.per_distinct_day
+            # --- If valid, calculate cost and recurse ---
 
-                    tracks_in_room = state.room_track_map.get(slot.room_name, set())
-                    is_new_track_in_room = work_to_try.track not in tracks_in_room
-                    is_room_mix = is_new_track_in_room and len(tracks_in_room) > 0
-                    if is_room_mix:
-                        cost_increase += self.penalties.per_room_track_mix
+            # How many works will this slot "consume" from the track?
+            works_this_slot_can_take = slot_to_try.available_space
+            works_this_track_needs = state.track_work_counts_remaining[track_name]
+            works_to_assign = min(works_this_slot_can_take, works_this_track_needs)
 
-                    is_new_slot_track = slot.id not in state.slot_track_map
+            # --- Calculate Incremental Cost ---
+            cost_increase = 0
+            day = slot_to_try.start.date()
 
-                    # --- Modify State (Move Down the Tree) ---
-                    state.work_index += 1
-                    state.current_cost += cost_increase
-                    state.assignments.append((work_to_try, slot))
-                    state.track_time_usage.setdefault(work_to_try.track, []).append((work_start, work_end))
+            is_new_day = day not in state.days_used
+            if is_new_day:
+                cost_increase += self.penalties.per_distinct_day
 
-                    old_cursor = state.slot_cursors[slot.id]
-                    state.slot_cursors[slot.id] = work_end
-                    state.slot_available_space[slot.id] -= 1
+            tracks_in_room = state.room_track_map.get(slot_to_try.room_name, set())
+            is_new_track_in_room = track_name not in tracks_in_room
+            is_room_mix = is_new_track_in_room and len(tracks_in_room) > 0
+            if is_room_mix:
+                cost_increase += self.penalties.per_room_track_mix
 
-                    if is_new_day: state.days_used.add(day)
-                    if is_new_track_in_room: state.room_track_map.setdefault(slot.room_name, set()).add(
-                        work_to_try.track)
-                    if is_new_slot_track:
-                        state.slot_track_map[slot.id] = work_to_try.track
+            # --- Modify State (Move Down the Tree) ---
+            state.slot_index += 1
+            state.current_cost += cost_increase
+            state.slot_track_map[slot_to_try.id] = track_name
+            state.track_work_counts_remaining[track_name] -= works_to_assign
+            state.track_time_usage.setdefault(track_name, []).append((slot_to_try.start, slot_to_try.end))
 
-                    # --- Recurse ---
-                    self._search(state)
+            if is_new_day: state.days_used.add(day)
+            if is_new_track_in_room: state.room_track_map.setdefault(slot_to_try.room_name, set()).add(track_name)
 
-                    # --- Backtrack (Revert State / Move Up) ---
-                    if is_new_slot_track:
-                        del state.slot_track_map[slot.id]
-                    if is_new_track_in_room: state.room_track_map[slot.room_name].remove(work_to_try.track)
-                    if is_new_day: state.days_used.remove(day)
+            # --- Recurse ---
+            self._search(state)
 
-                    state.slot_available_space[slot.id] += 1
-                    state.slot_cursors[slot.id] = old_cursor
-                    state.track_time_usage[work_to_try.track].pop()
-                    state.assignments.pop()
-                    state.current_cost -= cost_increase
-                    state.work_index -= 1
+            # --- Backtrack (Revert State / Move Up) ---
+            if is_new_track_in_room: state.room_track_map[slot_to_try.room_name].remove(track_name)
+            if is_new_day: state.days_used.remove(day)
 
-        # --- Branch 2: *Skip* this work (do not assign it) ---
+            state.track_time_usage[track_name].pop()
+            state.track_work_counts_remaining[track_name] += works_to_assign
+            del state.slot_track_map[slot_to_try.id]
+            state.current_cost -= cost_increase
+            state.slot_index -= 1
 
-        # --- Modify State ---
-        state.work_index += 1
-        state.current_cost += self.penalties.unassigned_work  # Add the heavy penalty
+        # --- Branch 2: *Skip* this slot (do not assign any track) ---
 
-        # --- Recurse ---
+        # Modify State
+        state.slot_index += 1
+
+        # Recurse
         self._search(state)
 
-        # --- Backtrack ---
-        state.current_cost -= self.penalties.unassigned_work
-        state.work_index -= 1
+        # Backtrack
+        state.slot_index -= 1
