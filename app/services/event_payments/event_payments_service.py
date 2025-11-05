@@ -1,5 +1,5 @@
-from logging import getLogger
 from datetime import datetime, timedelta, timezone
+from logging import getLogger
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -94,9 +94,11 @@ class EventPaymentsService(BaseService):
         mp = SDK(access_token)
         now_utc = datetime.now(timezone.utc)
         expiration_from = now_utc.isoformat(timespec="seconds").replace("+00:00", "Z")
-        expiration_to = (now_utc + timedelta(minutes=self._settings.CHECKOUT_EXPIRES_MINUTES)).isoformat(
-            timespec="seconds"
-        ).replace("+00:00", "Z")
+        expiration_to = (
+            (now_utc + timedelta(minutes=self._settings.CHECKOUT_EXPIRES_MINUTES))
+            .isoformat(timespec="seconds")
+            .replace("+00:00", "Z")
+        )
         preference_data = {
             "items": [
                 {
