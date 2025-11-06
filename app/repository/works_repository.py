@@ -15,7 +15,6 @@ from app.schemas.works.work import (
     WorkUpdateSchema,
 )
 
-
 class WorksRepository(Repository):
     def __init__(self, session: AsyncSession):
         super().__init__(session, WorkModel)
@@ -78,4 +77,12 @@ class WorksRepository(Repository):
 
     async def get_all_approved_works_for_event(self, event_id: UUID, offset: int, limit: int) -> list[WorkModel]:
         conditions = [WorkModel.event_id == event_id, WorkModel.state == WorkStates.APPROVED]
+        return await self._get_many_with_conditions(conditions, offset, limit)
+
+    async def get_unassigned_works(self, event_id: UUID, offset: int, limit: int) -> list[WorkModel]:
+        conditions = [
+            WorkModel.event_id == event_id,
+            WorkModel.state == WorkStates.APPROVED,
+            ~WorkModel.slot_links.any()  # No related slot links
+        ]
         return await self._get_many_with_conditions(conditions, offset, limit)

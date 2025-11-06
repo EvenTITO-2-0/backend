@@ -60,3 +60,32 @@ class WorkSlotRepository(Repository):
         logger.info(f"Deleted {deleted_count} work-slot links for work {work_id}.")
         await self.session.commit()
         return deleted_count
+
+    async def add_work_to_slot_by_id(self, slot_id: int, work_id: UUID) -> WorkSlotModel:
+        """
+        Creates a link between a work and a slot.
+        If the link already exists, it won't create a duplicate.
+        Returns the created WorkSlotModel instance.
+        """
+        logger.info(f"Linking work {work_id} to slot {slot_id}")
+
+        # Check if the link already exists to avoid duplicates
+        stmt = select(WorkSlotModel).where(
+            WorkSlotModel.slot_id == slot_id,
+            WorkSlotModel.work_id == work_id,
+        )
+        existing_link = await self.session.scalar(stmt)
+
+        if existing_link:
+            logger.warning(f"Work {work_id} is already linked to slot {slot_id}")
+            return existing_link
+
+        # Create the new work-slot link
+        work_slot_link = WorkSlotModel(slot_id=slot_id, work_id=work_id)
+        self.session.add(work_slot_link)
+
+        await self.session.flush()
+        await self.session.commit()
+
+        logger.info(f"Successfully linked work {work_id} to slot {slot_id}")
+        return work_slot_link

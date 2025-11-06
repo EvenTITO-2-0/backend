@@ -71,7 +71,6 @@ async def update_event_slot(slot_id: int, new_slot: SlotSchema, slots_configurat
 async def assign_works_to_slots(parameters: AssignWorksParametersSchema, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
     logger.info(f"Assigning works to slots for event {slots_configuration_service.event_id}")
     await slots_configuration_service.assign_works_to_slots(parameters)
-    time.sleep(1)
     return
 
 @events_configuration_router.get(path="/slots/works", status_code=200)
@@ -86,4 +85,9 @@ async def delete_work_for_slot(work_id: str, slots_configuration_service: SlotsC
     await slots_configuration_service.delete_slot_work(work_id)
     return
 
+@events_configuration_router.patch(path="/slots/{slot_id}/works/{work_id}", status_code=200)
+async def add_work_to_slot(slot_id: int, work_id: str, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+    logger.info(f"Adding work to slots from event {slots_configuration_service.event_id}")
+    await slots_configuration_service.assign_work_to_slot(slot_id, work_id)
+    return
 

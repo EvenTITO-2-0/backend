@@ -21,7 +21,6 @@ from app.services.works.works_service_dep import WorksServiceDep
 
 works_router = APIRouter(prefix="/{event_id}/works", tags=["Events: Works"])
 
-
 @works_router.get(
     path="", status_code=200, response_model=List[WorkWithState], dependencies=[or_(IsOrganizerDep, IsTrackChairDep)]
 )
@@ -33,6 +32,12 @@ async def get_works(
 ) -> list[WorkWithState]:
     return await work_service.get_works(track, offset, limit)
 
+@works_router.get(path="/unassigned", status_code=200, dependencies=[or_(IsAdminUsrDep, IsOrganizerDep)])
+async def get_unassigned_works(
+    works_service: WorksServiceDep,
+) -> list[WorkWithState]:
+    unassigned_works = await works_service.get_unassigned_works()
+    return unassigned_works
 
 @works_router.get(
     path="/talks", status_code=200, response_model=List[WorkWithState], dependencies=[Depends(verify_user_exists)]

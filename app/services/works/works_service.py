@@ -143,3 +143,7 @@ class WorksService(BaseService):
     async def get_works_with_talk_not_null(self, offset, limit):
         works = await self.works_repository.get_all_works_with_talk_not_null(self.event_id, offset, limit)
         return works
+
+    async def get_unassigned_works(self):
+        works = await self.works_repository.get_unassigned_works(self.event_id, 0, 100)
+        return works
