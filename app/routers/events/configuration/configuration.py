@@ -49,6 +49,12 @@ async def delete_event_slots(slots_configuration_service: SlotsConfigurationServ
     await slots_configuration_service.delete_event_slots_and_rooms()
     return
 
+@events_configuration_router.delete(path="/slots/works", status_code=200)
+async def delete_all_work_assignments(slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
+    logger.info(f"Deleting all work assignments for event {slots_configuration_service.event_id}")
+    await slots_configuration_service.delete_all_assignments()
+    return
+
 @events_configuration_router.delete(path="/slots/{slot_id}", status_code=200)
 async def delete_event_slot(slot_id: int, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
     logger.info(f"Deleting slot {slot_id} for event {slots_configuration_service.event_id}")

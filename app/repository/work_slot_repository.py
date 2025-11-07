@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Callable, Coroutine
 from uuid import UUID
 
 from sqlalchemy import select
@@ -13,32 +14,6 @@ logger = logging.getLogger(__name__)
 class WorkSlotRepository(Repository):
     def __init__(self, session: AsyncSession):
         super().__init__(session, WorkSlotModel)
-
-    async def delete_by_event_id(self, event_id: UUID) -> int:
-        """
-        Deletes all work-slot links associated with a given event.
-        Returns the number of links deleted.
-        """
-        logger.info(f"Deleting all work-slot links for event {event_id}")
-
-        subquery = (
-            select(EventRoomSlotModel.id)
-            .where(EventRoomSlotModel.event_id == event_id)
-            .scalar_subquery()
-        )
-
-        stmt = (
-            WorkSlotModel.__table__.delete()
-            .where(WorkSlotModel.slot_id.in_(subquery))
-            .returning(WorkSlotModel.slot_id)
-        )
-
-        result = await self.session.execute(stmt)
-        deleted_count = len(result.all())
-        await self.session.flush()
-
-        logger.info(f"Deleted {deleted_count} work-slot links.")
-        return deleted_count
 
     async def remove_for_work_id(self, work_id: UUID) -> int:
         """
@@ -89,3 +64,43 @@ class WorkSlotRepository(Repository):
 
         logger.info(f"Successfully linked work {work_id} to slot {slot_id}")
         return work_slot_link
+
+    async def add_all(self, work_slot_links: list[WorkSlotModel]) -> None:
+        """
+        Adds multiple work-slot links to the database.
+        """
+        logger.info(f"Adding {len(work_slot_links)} work-slot links to the database.")
+
+        self.session.add_all(work_slot_links)
+        await self.session.flush()
+        await self.session.commit()
+
+        logger.info(f"Successfully added {len(work_slot_links)} work-slot links.")
+
+    async def delete_assigned_works_by_event_id(self, event_id: UUID) -> Callable[[], int]:
+        """
+        Deletes all work-slot links for slots associated with a given event.
+        Returns the number of links deleted.
+        """
+        logger.info(f"Deleting all assigned works for event {event_id}")
+
+        subquery = (
+            select(EventRoomSlotModel.id)
+            .where(EventRoomSlotModel.event_id == event_id)
+            .scalar_subquery()
+        )
+
+        stmt = (
+            WorkSlotModel.__table__.delete()
+            .where(WorkSlotModel.slot_id.in_(subquery))
+        )
+
+        result = await self.session.execute(stmt)
+
+        deleted_count = result.rowcount
+
+        await self.session.flush()
+        await self.session.commit()
+
+        logger.info(f"Deleted {deleted_count} assigned works for event {event_id}.")
+        return deleted_count

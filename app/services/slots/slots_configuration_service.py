@@ -129,16 +129,19 @@ class SlotsConfigurationService(BaseService):
         logger.info(f"Assigning work {work_id} to slot {slots_id}")
         await self.work_slot_repository.add_work_to_slot_by_id(slots_id, work_id)
 
+    async def delete_all_assignments(self):
+        logger.info(f"Deleting all assigned works in event {self.event_id}")
+        await self.work_slot_repository.delete_assigned_works_by_event_id(self.event_id)
+
     async def assign_works_to_slots(self, parameters: AssignWorksParametersSchema):
         """
         (This is your main function from the class 'YourAssignmentService')
         """
         logger.info(f"Starting new optimal assignment with parameters: {parameters}")
 
-        # --- 1. Data Fetching ---
         if parameters.reset_previous_assignments:
             logger.info("Resetting previous assignments...")
-            await self.work_slot_repository.delete_by_event_id(self.event_id)
+            await self.delete_all_assignments()
 
         available_slots = await self.slots_repository.get_slots_by_event_id_with_works(self.event_id)
         assignable_works = await self.works_repository.get_all_approved_works_for_event(self.event_id, offset=0,
@@ -192,9 +195,7 @@ class SlotsConfigurationService(BaseService):
 
         if new_links_to_create:
             # Assuming a bulk_create method on your repository
-            self.work_slot_repository.session.add_all(new_links_to_create)
-            await self.work_slot_repository.session.flush()
-            await self.work_slot_repository.session.commit()
+            await self.work_slot_repository.add_all(new_links_to_create)
             logger.info("Successfully saved optimal assignments to the database.")
 
         return {
