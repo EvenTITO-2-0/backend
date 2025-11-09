@@ -21,6 +21,7 @@ class SlotWithWorksSchema(BaseModel):
     end: datetime
     room_name: str
     slot_type: str
+    title: str
 
     model_config = ConfigDict(from_attributes=True)
 

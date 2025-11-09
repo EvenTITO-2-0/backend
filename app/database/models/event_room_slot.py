@@ -13,6 +13,7 @@ class EventRoomSlotModel(Base):
     id = Column(Integer, primary_key=True)
     event_id = Column(UUID(as_uuid=True), ForeignKey("events.id"), nullable=False)
     room_name = Column(String, nullable=False)
+    title = Column(String, nullable=True)
     slot_type = Column(String, nullable=False)
     start = Column(DateTime(timezone=True), nullable=False)
     end = Column(DateTime(timezone=True), nullable=False)

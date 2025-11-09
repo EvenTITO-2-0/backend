@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column('event_id', sa.UUID(as_uuid=True), nullable=False),
         sa.Column('room_name', sa.String(), nullable=False),
         sa.Column('slot_type', sa.String(), nullable=False),
+        sa.Column('title', sa.String(), nullable=True),
         sa.Column('start', sa.DateTime(timezone=True), nullable=False),
         sa.Column('end', sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(['event_id'], ['events.id'], ),

@@ -45,6 +45,7 @@ class SlotsConfigurationService(BaseService):
             slot_type = slot.get('type')
             start = slot.get('start')
             end = slot.get('end')
+            title = slot.get('title')
             if isinstance(start, str):
                 start = datetime.fromisoformat(start)
             if isinstance(end, str):
@@ -57,16 +58,18 @@ class SlotsConfigurationService(BaseService):
                         room_name=room.get('name'),
                         slot_type=slot_type,
                         start=start,
-                        end=end
+                        end=end,
+                        title=title
                     ))
             elif slot_type == 'plenary':
                 logger.info(f"Creating slot for plenary session in room '{rooms[0].get('name')}'")
                 entries.append(EventRoomSlotModel(
                     event_id=self.event_id,
                     # TODO setear una sala particular para una pleanaria
-                    room_name=rooms[0].get('name'),
+                    room_name=slot.get('room_id'),
                     slot_type=slot_type,
                     start=start,
+                    title=title,
                     end=end
                 ))
         await self.slots_repository.bulk_create(entries)
@@ -109,6 +112,7 @@ class SlotsConfigurationService(BaseService):
             "slot_type": new_slot.type,
             "start": new_slot.start,
             "end": new_slot.end,
+            "title": new_slot.title,
         }
         result = await self.slots_repository.update(slot_id, update_data)
         logger.info(f"Updated slot {slot_id} for event {self.event_id}")
