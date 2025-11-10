@@ -14,6 +14,18 @@ class CostPenalties:
     per_distinct_day: int = 100
     per_room_track_mix: int = 10
 
+    @classmethod
+    def from_params(cls, same_day_tracks: int, same_room_tracks: int):
+        """
+        Creates a new CostPenalties instance using weighted parameters.
+        Each weight is interpreted as an exponent on a base cost factor.
+        """
+        base = 4
+        return cls(
+            unassigned_work=base ** 3,
+            per_distinct_day=base ** same_day_tracks,
+            per_room_track_mix=base ** same_room_tracks
+        )
 
 @dataclass
 class SearchState:

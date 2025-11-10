@@ -75,7 +75,7 @@ async def update_event_slot(slot_id: int, new_slot: SlotSchema, slots_configurat
 
 @events_configuration_router.post(path="/slots/assign", status_code=200)
 async def assign_works_to_slots(parameters: AssignWorksParametersSchema, slots_configuration_service: SlotsConfigurationServiceDep,) -> None:
-    logger.info(f"Assigning works to slots for event {slots_configuration_service.event_id}")
+    logger.info(f"Assigning works to slots for event {slots_configuration_service.event_id} with parameters: {parameters}")
     await slots_configuration_service.assign_works_to_slots(parameters)
     return
 

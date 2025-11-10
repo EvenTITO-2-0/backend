@@ -158,11 +158,9 @@ class SlotsConfigurationService(BaseService):
 
         # --- 2. Define Penalties ---
         # You can customize these priorities
-        penalties = CostPenalties(
-            unassigned_work=20,  # Highest cost
-            per_distinct_day=10,
-            per_room_track_mix=5
-        )
+        penalties = CostPenalties.from_params(
+            parameters.weights.same_day_tracks,
+            parameters.weights.same_room_tracks)
 
         # --- 3. (Optional but Recommended) Run Greedy Algorithm ---
         # Running a fast greedy algorithm first gives a *much* better
