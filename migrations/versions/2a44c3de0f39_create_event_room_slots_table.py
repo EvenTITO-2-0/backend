@@ -30,7 +30,15 @@ def upgrade() -> None:
         sa.Column('end', sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(['event_id'], ['events.id'], ),
     )
+    op.add_column("works", sa.Column("work_number", sa.Integer(), nullable=True))
+    op.create_unique_constraint(
+        "event_id_work_number_uc",
+        "works",
+        ["event_id", "work_number"],
+    )
 
 
 def downgrade() -> None:
     op.drop_table('event_room_slots')
+    op.drop_constraint("event_id_work_number_uc", "works", type_="unique")
+    op.drop_column("works", "work_number")

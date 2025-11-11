@@ -1,7 +1,7 @@
 from logging import getLogger
 from uuid import UUID
 
-from sqlalchemy import and_, update
+from sqlalchemy import and_, update, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models.review import ReviewModel
@@ -86,10 +86,16 @@ class ReviewsRepository(Repository):
         if len(reviews_ids) == 0:
             logger.error("No reviews to publish provided")
             return False
+
+        work_num = await self.get_max_work_number_for_event(event_id)
+        logger.info(f"Publishing reviews with work number {work_num}")
         update_work_query = (
             update(WorkModel)
             .where(and_(WorkModel.event_id == event_id, WorkModel.id == work_id))
-            .values(state=reviews_to_publish.new_work_status)
+            .values(
+                state=reviews_to_publish.new_work_status,
+                work_number=work_num + 1
+            )
         )
         if reviews_to_publish.resend_deadline is not None:
             logger.info("Setting new resend deadline for work %s in event %s", work_id, event_id)
@@ -135,3 +141,14 @@ class ReviewsRepository(Repository):
             )
             for row in res
         ]
+
+    async def get_max_work_number_for_event(self, event_id: UUID) -> int:
+        """
+        Return the highest work_number for a given event_id, or 0 if none exist.
+        Works correctly with an AsyncSession.
+        """
+        stmt = select(func.coalesce(func.max(WorkModel.work_number), 0)).where(
+            WorkModel.event_id == event_id
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one()

@@ -9,7 +9,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     String,
-    UniqueConstraint,
+    UniqueConstraint, Integer,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -38,6 +38,7 @@ class WorkModel(ModelTemplate, Base):
     talk = Column(JSON, nullable=True)
     state = Column(String, nullable=False, default=WorkStates.SUBMITTED)
     deadline_date = Column(DateTime, nullable=False)
+    work_number = Column(Integer, nullable=True)
 
     __table_args__ = (UniqueConstraint("event_id", "title", name="event_id_title_uc"),)
 
