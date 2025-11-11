@@ -29,6 +29,8 @@ class MercadoPagoSettings(BaseSettings):
     MARKETPLACE_NAME: str = "TPP-2"
     CLIENT_ID: str | None = None
     CLIENT_SECRET: str | None = None
+    CHECKOUT_EXPIRES_MINUTES: int = 20
+    BINARY_MODE: bool = False
 
 
 # TODO: Validar que si ENABLE_SEND_EMAILS==True, entonces lo otro este setteado.
