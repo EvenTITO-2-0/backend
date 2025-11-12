@@ -65,8 +65,7 @@ class SlotsConfigurationService(BaseService):
                 logger.info(f"Creating slot for plenary session in room '{rooms[0].get('name')}'")
                 entries.append(EventRoomSlotModel(
                     event_id=self.event_id,
-                    # TODO setear una sala particular para una pleanaria
-                    room_name=slot.get('room_id'),
+                    room_name=slot.get('room_name'),
                     slot_type=slot_type,
                     start=start,
                     title=title,
@@ -95,6 +94,7 @@ class SlotsConfigurationService(BaseService):
     async def create_event_slot(self, new_slot: SlotSchema) -> EventRoomSlotModel:
         logger.info(f"Creating single slot for event {self.event_id}: {new_slot}")
         db_in = EventRoomSlotModel(
+            title=new_slot.title,
             event_id=self.event_id,
             room_name=new_slot.room_name,
             slot_type=new_slot.type,
