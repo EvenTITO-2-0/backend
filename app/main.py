@@ -8,7 +8,7 @@ from app.routers.users.users import users_router
 
 logging.basicConfig(
     level=logging.INFO,  # Set the minimum level to log
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 app = FastAPI(

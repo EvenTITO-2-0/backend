@@ -11,6 +11,7 @@ from app.repository.crud_repository import Repository
 
 logger = logging.getLogger(__name__)
 
+
 class SlotsRepository(Repository):
     def __init__(self, session: AsyncSession):
         super().__init__(session, EventRoomSlotModel)
@@ -38,21 +39,11 @@ class SlotsRepository(Repository):
         """
         logger.info(f"Deleting work assignments for event {event_id}")
 
-        subquery = (
-            select(EventRoomSlotModel.id)
-            .where(EventRoomSlotModel.event_id == event_id)
-            .scalar_subquery()
-        )
-        await self.session.execute(
-            WorkSlotModel.__table__.delete().where(
-                WorkSlotModel.slot_id.in_(subquery)
-            )
-        )
+        subquery = select(EventRoomSlotModel.id).where(EventRoomSlotModel.event_id == event_id).scalar_subquery()
+        await self.session.execute(WorkSlotModel.__table__.delete().where(WorkSlotModel.slot_id.in_(subquery)))
 
         logger.info(f"Deleting event room slots for event {event_id}")
-        await self.session.execute(
-            EventRoomSlotModel.__table__.delete().where(EventRoomSlotModel.event_id == event_id)
-        )
+        await self.session.execute(EventRoomSlotModel.__table__.delete().where(EventRoomSlotModel.event_id == event_id))
 
         await self.session.flush()
         logger.info(f"Successfully deleted all slots and associations for event {event_id}")
@@ -68,10 +59,7 @@ class SlotsRepository(Repository):
         stmt = (
             select(EventRoomSlotModel)
             .where(EventRoomSlotModel.event_id == event_id)
-            .options(
-                selectinload(EventRoomSlotModel.work_links)
-                .selectinload(WorkSlotModel.work)
-            )
+            .options(selectinload(EventRoomSlotModel.work_links).selectinload(WorkSlotModel.work))
         )
 
         result = await self.session.scalars(stmt)
@@ -79,9 +67,6 @@ class SlotsRepository(Repository):
 
     async def get_slots_by_event_id_with_works(self, event_id: str) -> Sequence[EventRoomSlotModel]:
         logger.info(f"Fetching slots and associated work links for event {event_id}")
-        conditions = [EventRoomSlotModel.event_id == event_id, EventRoomSlotModel.slot_type == 'slot']
-        load_options = (
-            selectinload(EventRoomSlotModel.work_links)
-            .selectinload(WorkSlotModel.work)
-        )
+        conditions = [EventRoomSlotModel.event_id == event_id, EventRoomSlotModel.slot_type == "slot"]
+        load_options = selectinload(EventRoomSlotModel.work_links).selectinload(WorkSlotModel.work)
         return await self._get_many_with_conditions(conditions, offset=0, limit=1000, options=[load_options])

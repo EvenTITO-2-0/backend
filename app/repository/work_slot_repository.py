@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Coroutine
+from typing import Callable
 from uuid import UUID
 
 from sqlalchemy import select
@@ -10,6 +10,7 @@ from app.database.models.work_slot import WorkSlotModel
 from app.repository.crud_repository import Repository
 
 logger = logging.getLogger(__name__)
+
 
 class WorkSlotRepository(Repository):
     def __init__(self, session: AsyncSession):
@@ -22,11 +23,7 @@ class WorkSlotRepository(Repository):
         """
         logger.info(f"Deleting all work-slot links for work {work_id}")
 
-        stmt = (
-            WorkSlotModel.__table__.delete()
-            .where(WorkSlotModel.work_id == work_id)
-            .returning(WorkSlotModel.work_id)
-        )
+        stmt = WorkSlotModel.__table__.delete().where(WorkSlotModel.work_id == work_id).returning(WorkSlotModel.work_id)
 
         result = await self.session.execute(stmt)
         deleted_count = len(result.all())
@@ -84,16 +81,9 @@ class WorkSlotRepository(Repository):
         """
         logger.info(f"Deleting all assigned works for event {event_id}")
 
-        subquery = (
-            select(EventRoomSlotModel.id)
-            .where(EventRoomSlotModel.event_id == event_id)
-            .scalar_subquery()
-        )
+        subquery = select(EventRoomSlotModel.id).where(EventRoomSlotModel.event_id == event_id).scalar_subquery()
 
-        stmt = (
-            WorkSlotModel.__table__.delete()
-            .where(WorkSlotModel.slot_id.in_(subquery))
-        )
+        stmt = WorkSlotModel.__table__.delete().where(WorkSlotModel.slot_id.in_(subquery))
 
         result = await self.session.execute(stmt)
 

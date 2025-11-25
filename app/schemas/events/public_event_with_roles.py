@@ -1,6 +1,7 @@
+from pydantic import ConfigDict, Field
+
 from app.schemas.events.event_room_slot import EventRoomSlotSchema
 from app.schemas.events.public_event import PublicEventSchema
-from pydantic import ConfigDict, Field
 
 
 class PublicEventWithRolesSchema(PublicEventSchema):

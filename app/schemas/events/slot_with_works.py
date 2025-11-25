@@ -1,7 +1,8 @@
-from pydantic import ConfigDict, BaseModel, computed_field, Field  # <-- Import computed_field
 from datetime import datetime
-from uuid import UUID
 from typing import List
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, computed_field  # <-- Import computed_field
 
 
 class SlotWorkInfoSchema(BaseModel):
@@ -10,6 +11,7 @@ class SlotWorkInfoSchema(BaseModel):
     track: str
     work_number: int
     model_config = ConfigDict(from_attributes=True)
+
 
 class WorkSlotLinkSchema(BaseModel):
     work: SlotWorkInfoSchema | None = None
@@ -34,6 +36,4 @@ class SlotWithWorksSchema(BaseModel):
         if not self.work_links:
             return []
 
-        return [
-            link.work for link in self.work_links if link.work
-        ]
+        return [link.work for link in self.work_links if link.work]

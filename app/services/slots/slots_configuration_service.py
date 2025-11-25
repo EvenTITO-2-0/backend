@@ -1,29 +1,31 @@
 import copy
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import UUID
 
+from app.database.models import WorkSlotModel
 from app.database.models.event_room_slot import EventRoomSlotModel
-from app.schemas.events.assing_works_parameters import AssignWorksParametersSchema
-from app.services.services import BaseService
 from app.repository.events_repository import EventsRepository
 from app.repository.slots_repository import SlotsRepository
-from app.schemas.events.slot import SlotSchema
-
-from app.database.models.work import WorkStates, WorkModel
-from app.repository.works_repository import WorksRepository
 from app.repository.work_slot_repository import WorkSlotRepository
-
-from app.database.models import WorkSlotModel
-from app.services.slots.ConfigurableBBScheduler import CostPenalties, ConfigurableBBScheduler
+from app.repository.works_repository import WorksRepository
+from app.schemas.events.assing_works_parameters import AssignWorksParametersSchema
+from app.schemas.events.slot import SlotSchema
+from app.services.services import BaseService
+from app.services.slots.ConfigurableBBScheduler import ConfigurableBBScheduler, CostPenalties
 
 logger = logging.getLogger(__name__)
 
+
 class SlotsConfigurationService(BaseService):
-    def __init__(self, event_id: UUID, events_repository: EventsRepository,
-                 slots_repository: SlotsRepository,
-                 works_repository: WorksRepository,
-                 work_slot_repository: WorkSlotRepository):
+    def __init__(
+        self,
+        event_id: UUID,
+        events_repository: EventsRepository,
+        slots_repository: SlotsRepository,
+        works_repository: WorksRepository,
+        work_slot_repository: WorkSlotRepository,
+    ):
         self.event_id = event_id
         self.events_repository = events_repository
         self.slots_repository = slots_repository
@@ -33,46 +35,50 @@ class SlotsConfigurationService(BaseService):
     async def configure_event_slots_and_rooms(self):
         logger.info(f"Configuring slots and rooms for event {self.event_id}")
         event = await self.events_repository.get(self.event_id)
-        slots = event.mdata.get('slots', [])
-        rooms = event.mdata.get('rooms', [])
-        was_configured = event.mdata.get('was_configured', False)
+        slots = event.mdata.get("slots", [])
+        rooms = event.mdata.get("rooms", [])
+        was_configured = event.mdata.get("was_configured", False)
         if was_configured:
             return
 
         entries = []
         for slot in slots:
             logger.info(f"Processing slot: {slot}")
-            slot_type = slot.get('type')
-            start = slot.get('start')
-            end = slot.get('end')
-            title = slot.get('title')
+            slot_type = slot.get("type")
+            start = slot.get("start")
+            end = slot.get("end")
+            title = slot.get("title")
             if isinstance(start, str):
                 start = datetime.fromisoformat(start)
             if isinstance(end, str):
                 end = datetime.fromisoformat(end)
-            if slot_type in ('slot', 'break'):
+            if slot_type in ("slot", "break"):
                 logger.info(f"Creating slots for type '{slot_type}' in all rooms")
                 for room in rooms:
-                    entries.append(EventRoomSlotModel(
+                    entries.append(
+                        EventRoomSlotModel(
+                            event_id=self.event_id,
+                            room_name=room.get("name"),
+                            slot_type=slot_type,
+                            start=start,
+                            end=end,
+                            title=title,
+                        )
+                    )
+            elif slot_type == "plenary":
+                logger.info(f"Creating slot for plenary session in room '{rooms[0].get('name')}'")
+                entries.append(
+                    EventRoomSlotModel(
                         event_id=self.event_id,
-                        room_name=room.get('name'),
+                        room_name=slot.get("room_name"),
                         slot_type=slot_type,
                         start=start,
+                        title=title,
                         end=end,
-                        title=title
-                    ))
-            elif slot_type == 'plenary':
-                logger.info(f"Creating slot for plenary session in room '{rooms[0].get('name')}'")
-                entries.append(EventRoomSlotModel(
-                    event_id=self.event_id,
-                    room_name=slot.get('room_name'),
-                    slot_type=slot_type,
-                    start=start,
-                    title=title,
-                    end=end
-                ))
+                    )
+                )
         await self.slots_repository.bulk_create(entries)
-        event.mdata['was_configured'] = True
+        event.mdata["was_configured"] = True
         await self.events_repository.update(self.event_id, {"mdata": event.mdata})
         logger.info(f"Finished configuring slots and rooms for event {self.event_id}")
 
@@ -80,7 +86,7 @@ class SlotsConfigurationService(BaseService):
         logger.info(f"Deleting slots and rooms for event {self.event_id}")
         await self.slots_repository.delete_by_event_id(self.event_id)
         event = await self.events_repository.get(self.event_id)
-        event.mdata['was_configured'] = False
+        event.mdata["was_configured"] = False
         await self.events_repository.update(self.event_id, {"mdata": event.mdata})
         logger.info(f"Finished deleting slots and rooms for event {self.event_id}")
 
@@ -149,8 +155,9 @@ class SlotsConfigurationService(BaseService):
             await self.delete_all_assignments()
 
         available_slots = await self.slots_repository.get_slots_by_event_id_with_works(self.event_id)
-        assignable_works = await self.works_repository.get_all_approved_works_for_event(self.event_id, offset=0,
-                                                                                        limit=9999)
+        assignable_works = await self.works_repository.get_all_approved_works_for_event(
+            self.event_id, offset=0, limit=9999
+        )
 
         if not assignable_works or not available_slots:
             logger.warning("No assignable works or available slots.")
@@ -158,15 +165,13 @@ class SlotsConfigurationService(BaseService):
 
         # --- 2. Define Penalties ---
         # You can customize these priorities
-        penalties = CostPenalties.from_params(
-            parameters.weights.same_day_tracks,
-            parameters.weights.same_room_tracks)
+        penalties = CostPenalties.from_params(parameters.weights.same_day_tracks, parameters.weights.same_room_tracks)
 
         # --- 3. (Optional but Recommended) Run Greedy Algorithm ---
         # Running a fast greedy algorithm first gives a *much* better
         # initial bound, which makes the B&B search prune faster.
         # For this example, we'll just use infinity.
-        initial_greedy_cost = float('inf')
+        initial_greedy_cost = float("inf")
 
         # --- 4. Run Branch and Bound Algorithm ---
         logger.info("Starting Branch and Bound search for optimal cost...")
@@ -176,13 +181,11 @@ class SlotsConfigurationService(BaseService):
             works=copy.deepcopy(assignable_works),
             slots=copy.deepcopy(available_slots),
             time_per_work=parameters.time_per_work,
-            penalties=penalties
+            penalties=penalties,
         )
 
         # Pass the greedy solution's cost as the initial bound
-        optimal_assignments_list, optimal_cost = scheduler.solve(
-            greedy_cost_bound=initial_greedy_cost
-        )
+        optimal_assignments_list, optimal_cost = scheduler.solve(greedy_cost_bound=initial_greedy_cost)
 
         # --- 5. Finalization ---
         assignments_created = len(optimal_assignments_list)
@@ -192,8 +195,7 @@ class SlotsConfigurationService(BaseService):
         logger.info(f"Assignments: {assignments_created}, Unassigned: {unassigned_works}")
 
         new_links_to_create = [
-            WorkSlotModel(work_id=work.id, slot_id=slot.id)
-            for work, slot in optimal_assignments_list
+            WorkSlotModel(work_id=work.id, slot_id=slot.id) for work, slot in optimal_assignments_list
         ]
 
         if new_links_to_create:
@@ -205,6 +207,5 @@ class SlotsConfigurationService(BaseService):
             "assignments_created": assignments_created,
             "unassigned_works": unassigned_works,
             "final_cost": optimal_cost,
-            "is_optimal": True
+            "is_optimal": True,
         }
-

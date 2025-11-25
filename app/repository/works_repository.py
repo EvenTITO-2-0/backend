@@ -15,6 +15,7 @@ from app.schemas.works.work import (
     WorkUpdateSchema,
 )
 
+
 class WorksRepository(Repository):
     def __init__(self, session: AsyncSession):
         super().__init__(session, WorkModel)
@@ -83,6 +84,6 @@ class WorksRepository(Repository):
         conditions = [
             WorkModel.event_id == event_id,
             WorkModel.state == WorkStates.APPROVED,
-            ~WorkModel.slot_links.any()  # No related slot links
+            ~WorkModel.slot_links.any(),  # No related slot links
         ]
         return await self._get_many_with_conditions(conditions, offset, limit)

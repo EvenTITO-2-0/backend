@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class EventRoomSlotSchema(BaseModel):
@@ -10,4 +11,3 @@ class EventRoomSlotSchema(BaseModel):
     slot_type: str
     start: datetime
     end: datetime
-

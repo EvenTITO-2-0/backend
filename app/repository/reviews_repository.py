@@ -1,7 +1,7 @@
 from logging import getLogger
 from uuid import UUID
 
-from sqlalchemy import and_, update, select, func
+from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models.review import ReviewModel
@@ -13,6 +13,7 @@ from app.schemas.users.utils import UID
 from app.schemas.works.review import ReviewCreateRequestSchema, ReviewPublishSchema, ReviewResponseSchema
 
 logger = getLogger(__name__)
+
 
 class ReviewsRepository(Repository):
     def __init__(self, session: AsyncSession):
@@ -92,10 +93,7 @@ class ReviewsRepository(Repository):
         update_work_query = (
             update(WorkModel)
             .where(and_(WorkModel.event_id == event_id, WorkModel.id == work_id))
-            .values(
-                state=reviews_to_publish.new_work_status,
-                work_number=work_num + 1
-            )
+            .values(state=reviews_to_publish.new_work_status, work_number=work_num + 1)
         )
         if reviews_to_publish.resend_deadline is not None:
             logger.info("Setting new resend deadline for work %s in event %s", work_id, event_id)
@@ -105,7 +103,9 @@ class ReviewsRepository(Repository):
             conditions = [ReviewModel.event_id == event_id, ReviewModel.work_id == work_id, ReviewModel.id == review_id]
             review = await self._get_with_conditions(conditions)
             if not review:
-                logger.error("Couldnt obtain review %s to publish for work %s in event %s", review_id, work_id, event_id)
+                logger.error(
+                    "Couldnt obtain review %s to publish for work %s in event %s", review_id, work_id, event_id
+                )
                 return False
 
             update_review_query = update(ReviewModel).where(ReviewModel.id == review.id).values(shared=True)
@@ -147,8 +147,6 @@ class ReviewsRepository(Repository):
         Return the highest work_number for a given event_id, or 0 if none exist.
         Works correctly with an AsyncSession.
         """
-        stmt = select(func.coalesce(func.max(WorkModel.work_number), 0)).where(
-            WorkModel.event_id == event_id
-        )
+        stmt = select(func.coalesce(func.max(WorkModel.work_number), 0)).where(WorkModel.event_id == event_id)
         result = await self.session.execute(stmt)
         return result.scalar_one()

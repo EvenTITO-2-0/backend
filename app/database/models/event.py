@@ -51,8 +51,5 @@ class EventModel(ModelTemplate, Base):
     payment_provider = relationship("ProviderAccountModel", back_populates="events")
 
     event_slots: Mapped[List["EventRoomSlotModel"]] = relationship(
-        "EventRoomSlotModel",
-        back_populates="event",
-        cascade="all, delete-orphan",
-        lazy="selectin"
+        "EventRoomSlotModel", back_populates="event", cascade="all, delete-orphan", lazy="selectin"
     )
