@@ -19,9 +19,7 @@ class CostPenalties:
     def from_params(cls, same_day_tracks: int, same_room_tracks: int):
         base = 4
         return cls(
-            unassigned_work=base**3,
-            per_distinct_day=base**same_day_tracks,
-            per_room_track_mix=base**same_room_tracks
+            unassigned_work=base**3, per_distinct_day=base**same_day_tracks, per_room_track_mix=base**same_room_tracks
         )
 
 
@@ -49,7 +47,7 @@ def _has_time_conflict(state: SearchState, track_name: str, slot) -> bool:
 
 class ConfigurableBBScheduler:
     def __init__(
-            self, works: List[WorkModel], slots: List[EventRoomSlotModel], time_per_work: int, penalties: CostPenalties
+        self, works: List[WorkModel], slots: List[EventRoomSlotModel], time_per_work: int, penalties: CostPenalties
     ):
         self.penalties = penalties
         self.time_delta = timedelta(minutes=time_per_work)
@@ -75,13 +73,7 @@ class ConfigurableBBScheduler:
         }
 
         # Delegate slot initialization
-        self._initialize_slots(
-            slots,
-            all_works_map,
-            initial_state,
-            initial_track_counts_remaining,
-            assigned_work_ids
-        )
+        self._initialize_slots(slots, all_works_map, initial_state, initial_track_counts_remaining, assigned_work_ids)
 
         unassigned_works = [w for w in works if cast(UUID, w.id) not in assigned_work_ids]
 
@@ -110,12 +102,12 @@ class ConfigurableBBScheduler:
         self.initial_state.track_work_counts_remaining = initial_track_counts_remaining
 
     def _initialize_slots(
-            self,
-            slots: List[EventRoomSlotModel],
-            all_works_map: Dict[UUID, WorkModel],
-            state: SearchState,
-            track_counts: Dict[str, int],
-            assigned_work_ids: Set[UUID]
+        self,
+        slots: List[EventRoomSlotModel],
+        all_works_map: Dict[UUID, WorkModel],
+        state: SearchState,
+        track_counts: Dict[str, int],
+        assigned_work_ids: Set[UUID],
     ):
         """Helper to process slots and pre-assignments during init."""
         for slot in slots:
@@ -130,7 +122,7 @@ class ConfigurableBBScheduler:
                 )
 
     def _handle_slot_pre_assignment(
-            self, slot, works_map: Dict[UUID, WorkModel], state, track_counts, assigned_ids: Set[UUID], num_existing
+        self, slot, works_map: Dict[UUID, WorkModel], state, track_counts, assigned_ids: Set[UUID], num_existing
     ):
         try:
             first_work_id = slot.work_links[0].work_id
@@ -249,9 +241,7 @@ class ConfigurableBBScheduler:
 
     def _process_open_slot(self, state: SearchState, slot):
         """Tries all valid tracks for an open slot, then tries skipping the slot."""
-        tracks_with_work = [
-            t for t in self.available_tracks if state.track_work_counts_remaining.get(t, 0) > 0
-        ]
+        tracks_with_work = [t for t in self.available_tracks if state.track_work_counts_remaining.get(t, 0) > 0]
 
         for track_name in tracks_with_work:
             if _has_time_conflict(state, track_name, slot):
