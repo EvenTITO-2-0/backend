@@ -18,4 +18,4 @@ def is_valid_date_and_time(date, time=None):
 def is_valid_datetime(_datetime):
     _timezone = pendulum.timezone("America/Argentina/Buenos_Aires")
     _datetime = _timezone.convert(_datetime)
-    return _datetime <= now_datetime()
+    return _datetime >= now_datetime()

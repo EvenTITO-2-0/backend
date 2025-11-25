@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models.work import WorkModel
+from app.database.models.work import WorkModel, WorkStates
 from app.repository.crud_repository import Repository
 from app.schemas.users.utils import UID
 from app.schemas.works.work import (
@@ -75,3 +75,15 @@ class WorksRepository(Repository):
     async def update_work_status(self, event_id: UUID, work_id: UUID, status: WorkStateSchema):
         conditions = [WorkModel.event_id == event_id, WorkModel.id == work_id]
         return await self._update_with_conditions(conditions, status)
+
+    async def get_all_approved_works_for_event(self, event_id: UUID, offset: int, limit: int) -> list[WorkModel]:
+        conditions = [WorkModel.event_id == event_id, WorkModel.state == WorkStates.APPROVED]
+        return await self._get_many_with_conditions(conditions, offset, limit)
+
+    async def get_unassigned_works(self, event_id: UUID, offset: int, limit: int) -> list[WorkModel]:
+        conditions = [
+            WorkModel.event_id == event_id,
+            WorkModel.state == WorkStates.APPROVED,
+            ~WorkModel.slot_links.any(),  # No related slot links
+        ]
+        return await self._get_many_with_conditions(conditions, offset, limit)

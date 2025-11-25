@@ -8,6 +8,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     UniqueConstraint,
 )
@@ -38,7 +39,9 @@ class WorkModel(ModelTemplate, Base):
     talk = Column(JSON, nullable=True)
     state = Column(String, nullable=False, default=WorkStates.SUBMITTED)
     deadline_date = Column(DateTime, nullable=False)
+    work_number = Column(Integer, nullable=True)
 
     __table_args__ = (UniqueConstraint("event_id", "title", name="event_id_title_uc"),)
 
     reviewers = relationship("ReviewerModel", back_populates="work", lazy=True)
+    slot_links = relationship("WorkSlotModel", back_populates="work", lazy=True)

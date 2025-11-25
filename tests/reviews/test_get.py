@@ -71,7 +71,7 @@ async def test_get_reviews_ok(
     )
     review_1 = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer_1)
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_1_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review_1),
@@ -210,7 +210,7 @@ async def test_get_my_work_reviews_ok(
     )
     review_1 = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer_1)
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_1_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review_1),
@@ -349,7 +349,7 @@ async def test_get_my_work_reviews_nothing_shared(
     )
     review_1 = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer_1)
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_1_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review_1),

@@ -34,6 +34,14 @@ async def get_works(
     return await work_service.get_works(track, offset, limit)
 
 
+@works_router.get(path="/unassigned", status_code=200, dependencies=[or_(IsAdminUsrDep, IsOrganizerDep)])
+async def get_unassigned_works(
+    works_service: WorksServiceDep,
+) -> list[WorkWithState]:
+    unassigned_works = await works_service.get_unassigned_works()
+    return unassigned_works
+
+
 @works_router.get(
     path="/talks", status_code=200, response_model=List[WorkWithState], dependencies=[Depends(verify_user_exists)]
 )

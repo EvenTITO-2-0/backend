@@ -77,8 +77,6 @@ class WorksService(BaseService):
         if InscriptionRole.SPEAKER not in my_inscription.roles:
             raise CannotCreateWorkIfNotSpeakerInscription(self.event_id)
 
-        print("Como no van a logeuar hijos de puta")
-
         deadline_time = submission_deadline.time or time(23, 59, 59)
         created_work = await self.works_repository.create_work(
             work, self.event_id, datetime.combine(submission_deadline.date, deadline_time), self.user_id
@@ -142,4 +140,8 @@ class WorksService(BaseService):
 
     async def get_works_with_talk_not_null(self, offset, limit):
         works = await self.works_repository.get_all_works_with_talk_not_null(self.event_id, offset, limit)
+        return works
+
+    async def get_unassigned_works(self):
+        works = await self.works_repository.get_unassigned_works(self.event_id, 0, 100)
         return works
