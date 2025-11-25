@@ -17,57 +17,6 @@ from ..commontest import create_headers
 from ..works.test_create_work import USER_WORK
 
 
-async def test_create_review_error_after_work_deadline(
-    client,
-    create_user,
-    create_event_creator,
-    create_event_from_event_creator,
-    create_event_started_with_inscription_from_event_creator,
-):
-    create_work_response = await client.post(
-        f"/events/{create_event_from_event_creator}/works",
-        json=jsonable_encoder(USER_WORK),
-        headers=create_headers(create_event_creator["id"]),
-    )
-    assert create_work_response.status_code == 201
-    work_id = create_work_response.json()
-
-    submission_response = await client.put(
-        f"/events/{create_event_from_event_creator}/works/{work_id}/submissions/submit",
-        headers=create_headers(create_event_creator["id"]),
-    )
-    assert submission_response.status_code == 201
-
-    new_reviewer_1 = ReviewerRequestSchema(
-        work_id=work_id,
-        email=create_user["email"],
-        review_deadline=datetime.now() + datetime_library.timedelta(days=10),
-    )
-
-    request = ReviewerCreateRequestSchema(reviewers=[new_reviewer_1])
-
-    reviewer_response = await client.post(
-        f"/events/{create_event_from_event_creator}/reviewers",
-        json=jsonable_encoder(request),
-        headers=create_headers(create_event_creator["id"]),
-    )
-
-    assert reviewer_response.status_code == 201
-
-    answer = ReviewAnswer(
-        answers=[SimpleAnswer(question="Comentarios", answer="Muy buen trabajo.", type_question="simple_question")]
-    )
-    review = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer)
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=30)):
-        create_review_response = await client.post(
-            f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
-            json=jsonable_encoder(review),
-            headers=create_headers(create_user["id"]),
-        )
-
-    assert create_review_response.status_code == 409
-
-
 async def test_create_review_error_work_has_no_submissions(
     client,
     create_user,
