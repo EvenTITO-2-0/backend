@@ -1,5 +1,4 @@
 import logging
-from typing import Callable
 from uuid import UUID
 
 from sqlalchemy import select
@@ -74,7 +73,7 @@ class WorkSlotRepository(Repository):
 
         logger.info(f"Successfully added {len(work_slot_links)} work-slot links.")
 
-    async def delete_assigned_works_by_event_id(self, event_id: UUID) -> Callable[[], int]:
+    async def delete_assigned_works_by_event_id(self, event_id: UUID) -> None:
         """
         Deletes all work-slot links for slots associated with a given event.
         Returns the number of links deleted.
@@ -85,12 +84,8 @@ class WorkSlotRepository(Repository):
 
         stmt = WorkSlotModel.__table__.delete().where(WorkSlotModel.slot_id.in_(subquery))
 
-        result = await self.session.execute(stmt)
-
-        deleted_count = result.rowcount
-
+        await self.session.execute(stmt)
         await self.session.flush()
         await self.session.commit()
 
-        logger.info(f"Deleted {deleted_count} assigned works for event {event_id}.")
-        return deleted_count
+        logger.info(f"Deletedassigned works for event {event_id}.")
