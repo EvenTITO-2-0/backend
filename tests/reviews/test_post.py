@@ -35,7 +35,7 @@ async def test_create_review_error_after_work_deadline(
     new_reviewer_1 = ReviewerRequestSchema(
         work_id=work_id,
         email=create_user["email"],
-        review_deadline=datetime_library.date.today() + datetime_library.timedelta(days=10),
+        review_deadline=datetime.now() + datetime_library.timedelta(days=10),
     )
 
     request = ReviewerCreateRequestSchema(reviewers=[new_reviewer_1])
