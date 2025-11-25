@@ -30,8 +30,14 @@ async def test_create_review_error_after_work_deadline(
         headers=create_headers(create_event_creator["id"]),
     )
     assert create_work_response.status_code == 201
-
     work_id = create_work_response.json()
+
+    submission_response = await client.put(
+        f"/events/{create_event_from_event_creator}/works/{work_id}/submissions/submit",
+        headers=create_headers(create_event_creator["id"]),
+    )
+    assert submission_response.status_code == 201
+
     new_reviewer_1 = ReviewerRequestSchema(
         work_id=work_id,
         email=create_user["email"],
