@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy import Integer, DateTime
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy.orm import relationship
 
 from .base import Base
 
@@ -19,4 +19,11 @@ class EventRoomSlotModel(Base):
     end = Column(DateTime(timezone=True), nullable=False)
 
     event = relationship("EventModel", back_populates="event_slots")
-    work_links = relationship("WorkSlotModel", back_populates="slot", lazy="selectin")
+
+    work_links = relationship(
+        "WorkSlotModel",
+        back_populates="slot",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
