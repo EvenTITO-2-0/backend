@@ -30,8 +30,8 @@ class SlotWithWorksSchema(BaseModel):
 
     work_links: List[WorkSlotLinkSchema] = Field(default=[], exclude=True)
 
-    @computed_field
     @property
+    @computed_field
     def works(self) -> List[SlotWorkInfoSchema]:
         if not self.work_links:
             return []

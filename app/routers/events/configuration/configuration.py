@@ -1,6 +1,7 @@
 import logging
 import time
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter
 
@@ -118,7 +119,7 @@ async def get_slots_with_works(
 
 @events_configuration_router.delete(path="/slots/works/{work_id}", status_code=200)
 async def delete_work_for_slot(
-    work_id: str,
+    work_id: UUID,
     slots_configuration_service: SlotsConfigurationServiceDep,
 ) -> None:
     logger.info(f"Fetching slots with works for event {slots_configuration_service.event_id}")
@@ -129,7 +130,7 @@ async def delete_work_for_slot(
 @events_configuration_router.patch(path="/slots/{slot_id}/works/{work_id}", status_code=200)
 async def add_work_to_slot(
     slot_id: int,
-    work_id: str,
+    work_id: UUID,
     slots_configuration_service: SlotsConfigurationServiceDep,
 ) -> None:
     logger.info(f"Adding work to slots from event {slots_configuration_service.event_id}")

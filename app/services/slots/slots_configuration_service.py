@@ -177,9 +177,10 @@ class SlotsConfigurationService(BaseService):
         logger.info("Starting Branch and Bound search for optimal cost...")
 
         # Pass deepcopies so the original data isn't modified
+        available_slots_list = list(available_slots)
         scheduler = ConfigurableBBScheduler(
             works=copy.deepcopy(assignable_works),
-            slots=copy.deepcopy(available_slots),
+            slots=copy.deepcopy(available_slots_list),
             time_per_work=parameters.time_per_work,
             penalties=penalties,
         )
