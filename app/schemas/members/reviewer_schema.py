@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, PrivateAttr
 
 from app.schemas.members.member_schema import MemberResponseSchema
 from app.schemas.users.utils import UID
+from app.schemas.works.review import ReviewResponseSchema
 from app.schemas.works.work import WorkWithState
 
 
@@ -21,6 +22,7 @@ class ReviewerAssignmentSchema(BaseModel):
 
 class ReviewerAssignmentWithWorkSchema(ReviewerAssignmentSchema):
     work: WorkWithState
+    reviews: list[ReviewResponseSchema] = Field(default_factory=list)
 
 
 class ReviewerResponseSchema(MemberResponseSchema, ReviewerAssignmentSchema):

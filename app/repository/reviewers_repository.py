@@ -4,8 +4,10 @@ from sqlalchemy import and_, exists, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.database.models.review import ReviewModel
 from app.database.models.reviewer import ReviewerModel
 from app.database.models.user import UserModel
+from app.database.models.work import WorkModel
 from app.repository.members_repository import MemberRepository
 from app.schemas.members.reviewer_schema import (
     ReviewerAssignmentWithWorkSchema,
@@ -15,6 +17,7 @@ from app.schemas.members.reviewer_schema import (
     ReviewerWithWorksResponseSchema,
 )
 from app.schemas.users.utils import UID
+from app.schemas.works.review import ReviewResponseSchema
 from app.schemas.works.work import WorkWithState
 
 
@@ -132,15 +135,39 @@ class ReviewerRepository(MemberRepository):
     async def get_assignments(self, event_id: UUID, user_id: UID):
         query = (
             select(ReviewerModel)
-            .options(joinedload(ReviewerModel.work))
+            .options(
+                joinedload(ReviewerModel.work).joinedload(WorkModel.reviews).joinedload(ReviewModel.reviewer)
+            )
             .where(and_(ReviewerModel.event_id == event_id, ReviewerModel.user_id == user_id))
         )
 
         result = await self.session.execute(query)
-        res = result.scalars().all()
+        res = result.unique().scalars().all()
         return [
             ReviewerAssignmentWithWorkSchema(
-                work_id=row.work_id, review_deadline=row.review_deadline, work=WorkWithState(**row.work.__dict__)
+                work_id=row.work_id,
+                review_deadline=row.review_deadline,
+                work=WorkWithState(**row.work.__dict__),
+                reviews=[
+                    ReviewResponseSchema(
+                        id=review.id,
+                        event_id=review.event_id,
+                        work_id=review.work_id,
+                        submission_id=review.submission_id,
+                        reviewer_id=review.reviewer_id,
+                        status=review.status,
+                        review=review.review,
+                        creation_date=review.creation_date,
+                        last_update=review.last_update,
+                        reviewer={
+                            "name": review.reviewer.name,
+                            "lastname": review.reviewer.lastname,
+                            "email": review.reviewer.email,
+                        },
+                    )
+                    for review in row.work.reviews
+                    if review.reviewer_id == user_id
+                ],
             )
             for row in res
         ]
