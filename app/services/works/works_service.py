@@ -22,6 +22,7 @@ from app.schemas.works.work import (
     WorkStateSchema,
     WorkUpdateAdministrationSchema,
     WorkUpdateSchema,
+    WorkWithSchedule,
     WorkWithState,
 )
 from app.services.event_inscriptions.event_inscriptions_service import EventInscriptionsService
@@ -50,10 +51,27 @@ class WorksService(BaseService):
 
     async def get_works(self, track: str, offset: int, limit: int):
         if track:
-            works = await self.works_repository.get_works_by_track(self.event_id, track, offset, limit)
+            works_models = await self.works_repository.get_works_by_track(self.event_id, track, offset, limit)
         else:
-            works = await self.works_repository.get_all_works_for_event(self.event_id, offset, limit)
-        return works
+            works_models = await self.works_repository.get_all_works_for_event(self.event_id, offset, limit)
+
+        results = []
+        for work in works_models:
+            work_dto = WorkWithSchedule.model_validate(work, from_attributes=True)
+
+            # Map Schedule Data
+            if work.slot_links and len(work.slot_links) > 0:
+                work_slot = work.slot_links[0]
+
+                if work_slot.slot:
+                    # UPDATED: Use 'start', 'end', and 'room_name' directly
+                    work_dto.start_date = work_slot.slot.start
+                    work_dto.end_date = work_slot.slot.end
+                    work_dto.room_name = work_slot.slot.room_name
+
+            results.append(work_dto)
+
+        return results
 
     async def get_my_works(self, offset: int, limit: int):
         works = await self.works_repository.get_all_works_for_user_in_event(self.event_id, self.user_id, offset, limit)

@@ -2,8 +2,11 @@ import time
 from datetime import datetime
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from app.database.models import WorkSlotModel, EventRoomSlotModel
 from app.database.models.work import WorkModel, WorkStates
 from app.repository.crud_repository import Repository
 from app.schemas.users.utils import UID
@@ -33,8 +36,28 @@ class WorksRepository(Repository):
         return await self._get_many_with_conditions(conditions, offset, limit)
 
     async def get_all_works_for_event(self, event_id: UUID, offset: int, limit: int) -> list[WorkModel]:
-        conditions = [WorkModel.event_id == event_id]
-        return await self._get_many_with_conditions(conditions, offset, limit)
+        # Custom query with Eager Loading to avoid MissingGreenlet error
+        stmt = (
+            select(WorkModel)
+            .where(WorkModel.event_id == event_id)
+            .options(selectinload(WorkModel.slot_links).selectinload(WorkSlotModel.slot))
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_works_by_track(self, event_id: UUID, track: str, offset: int, limit: int) -> list[WorkModel]:
+        # Custom query with Eager Loading
+        stmt = (
+            select(WorkModel)
+            .where(WorkModel.event_id == event_id, WorkModel.track == track)
+            .options(selectinload(WorkModel.slot_links).selectinload(WorkSlotModel.slot))
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
 
     async def get_all_works_for_user_in_event(
         self, event_id: UUID, user_id: UID, offset: int, limit: int
@@ -44,10 +67,6 @@ class WorksRepository(Repository):
 
     async def get_works_in_tracks(self, event_id: UUID, tracks: list[str], offset: int, limit: int) -> list[WorkModel]:
         conditions = [WorkModel.event_id == event_id, WorkModel.track.in_(tracks)]
-        return await self._get_many_with_conditions(conditions, offset, limit)
-
-    async def get_works_by_track(self, event_id: UUID, track: str, offset: int, limit: int) -> list[WorkModel]:
-        conditions = [WorkModel.event_id == event_id, WorkModel.track == track]
         return await self._get_many_with_conditions(conditions, offset, limit)
 
     async def create_work(self, work: CreateWorkSchema, event_id: UUID, deadline_date: datetime, author_id: UID):

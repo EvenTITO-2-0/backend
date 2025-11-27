@@ -15,15 +15,17 @@ from app.schemas.works.work import (
     WorkStateSchema,
     WorkUpdateAdministrationSchema,
     WorkUpdateSchema,
+    WorkWithSchedule,
     WorkWithState,
 )
 from app.services.works.works_service_dep import WorksServiceDep
 
 works_router = APIRouter(prefix="/{event_id}/works", tags=["Events: Works"])
 
+# generate logger and logs
 
 @works_router.get(
-    path="", status_code=200, response_model=List[WorkWithState], dependencies=[or_(IsOrganizerDep, IsTrackChairDep)]
+    path="", status_code=200, response_model=List[WorkWithSchedule], dependencies=[or_(IsOrganizerDep, IsTrackChairDep)]
 )
 async def get_works(
     work_service: WorksServiceDep,
@@ -31,6 +33,7 @@ async def get_works(
     limit: int = Query(default=100, le=100),
     track: str = Query(default=None),
 ) -> list[WorkWithState]:
+
     return await work_service.get_works(track, offset, limit)
 
 
