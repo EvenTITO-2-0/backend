@@ -167,12 +167,12 @@ class EventInscriptionsService(BaseService):
     async def recover_payment_checkout_url(self, inscription_id: UUID, payment_id: UUID) -> dict:
         # Check ownership
         if not await self.is_my_inscription(inscription_id):
-            # Allow if organizer? The service init has user_id. 
+            # Allow if organizer? The service init has user_id.
             # But usually pay/recover is for the attendee.
             # If organizer wants to see it, maybe they can?
             # For now let's stick to "is my inscription" check or let the underlying service handle valid IDs.
-            # Ideally we verify the user owns the inscription OR is organizer. 
-            # But `is_my_inscription` only checks user_id. 
+            # Ideally we verify the user owns the inscription OR is organizer.
+            # But `is_my_inscription` only checks user_id.
             # Let's rely on router dependencies for authz (IsOrganizer or IsRegistered).
             pass
 
