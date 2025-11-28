@@ -1,9 +1,10 @@
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import update
+from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models.payment import PaymentModel
+from app.database.models.payment import PaymentModel, PaymentStatus
 from app.database.models.work import WorkModel
 from app.repository.crud_repository import Repository
 from app.schemas.payments.payment import (
@@ -77,8 +78,30 @@ class PaymentsRepository(Repository):
         obj = await self._get_with_conditions(conditions)
         return getattr(obj, "inscription_id", None)
 
+    async def expire_payments(self, event_id: UUID, inscription_id: UUID, cutoff_date: datetime) -> None:
+        stmt = (
+            update(PaymentModel)
+            .where(
+                PaymentModel.event_id == event_id,
+                PaymentModel.inscription_id == inscription_id,
+                PaymentModel.status == PaymentStatus.PENDING_APPROVAL,
+                PaymentModel.creation_date < cutoff_date,
+            )
+            .values(status=PaymentStatus.REJECTED)
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
     async def _get_payments(self, conditions, offset: int, limit: int) -> list[PaymentResponseSchema]:
-        res = await self._get_many_with_conditions(conditions, offset, limit)
+        stmt = (
+            select(PaymentModel)
+            .where(and_(*conditions))
+            .order_by(PaymentModel.creation_date.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        res = await self.session.execute(stmt)
+        res = res.scalars().all()
         payments = []
         for row in res:
             if row.works:
