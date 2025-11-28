@@ -2,7 +2,7 @@ from logging import getLogger
 from uuid import UUID
 
 from app.database.models.event import EventStatus
-from app.database.models.inscription import InscriptionModel, InscriptionStatus
+from app.database.models.inscription import InscriptionModel
 from app.exceptions.inscriptions_exceptions import (
     EventNotStarted,
     InscriptionAlreadyExists,
@@ -68,7 +68,7 @@ class EventInscriptionsService(BaseService):
 
         event = await self.events_configuration_service.get_configuration()
         pricing = getattr(event, "pricing", None) or []
-        
+
         if (isinstance(pricing, list) and len(pricing) == 1 and 
             ((pricing[0] or {}).get("value") == 0)):
             fare_name = pricing[0].get("name", "Gratuito")
