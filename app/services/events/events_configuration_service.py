@@ -31,13 +31,13 @@ class EventsConfigurationService(BaseService):
 
     async def update_general(self, general: ConfigurationGeneralEventSchema) -> None:
         event = await self.events_repository.get(self.event_id)
-        if event.status == EventStatus.STARTED and set(event.tracks) != set(general.tracks):
+        if event.status == EventStatus.STARTED and set(event.tracks or []) != set(general.tracks or []):
             raise CannotUpdateTracksAfterEventStarts(self.event_id)
         await self.events_repository.update(self.event_id, general)
 
     async def update_tracks(self, tracks_schema: DynamicTracksEventSchema) -> None:
         event = await self.events_repository.get(self.event_id)
-        if event.status == EventStatus.STARTED and set(event.tracks) != set(tracks_schema.tracks):
+        if event.status == EventStatus.STARTED and set(event.tracks or []) != set(tracks_schema.tracks or []):
             raise CannotUpdateTracksAfterEventStarts(self.event_id)
         await self.events_repository.update(self.event_id, tracks_schema)
 

@@ -49,26 +49,23 @@ class EventPaymentsService(BaseService):
     async def pay_inscription(self, inscription_id: UUID, payment_request: PaymentRequestSchema) -> dict:
         payment_id = await self.payments_repository.do_new_payment(self.event_id, inscription_id, payment_request)
         event = await self.events_repository.get(self.event_id)
-        access_token = None
-        if event.provider_account_id:
-            provider_account = await self.provider_account_repository.get(event.provider_account_id)
-            access_token = provider_account.access_token
-        elif self._settings.ENABLE_ENV_PROVIDER_FALLBACK and self._settings.ACCESS_TOKEN:
-            access_token = self._settings.ACCESS_TOKEN
-        if not access_token:
-            raise HTTPException(status_code=400, detail="El organizador no configuró Mercado Pago para este evento")
+        
         if not getattr(event, "pricing", None):
             raise HTTPException(status_code=400, detail="El evento no tiene tarifas configuradas")
+            
         fare = next((f for f in event.pricing if f.get("name") == payment_request.fare_name), None)
         if fare is None:
             raise HTTPException(status_code=400, detail=f"Tarifa '{payment_request.fare_name}' no encontrada")
+            
         try:
             raw_value = fare.get("value", 0)
             amount = float(raw_value) if not isinstance(raw_value, (int, float)) else float(raw_value)
         except Exception as err:
             raise HTTPException(status_code=400, detail="Valor de tarifa inválido") from err
+
         if amount < 0:
             raise HTTPException(status_code=400, detail="El monto de la tarifa no puede ser negativo")
+            
         if amount == 0:
             await self.payments_repository.update_provider_fields(
                 payment_id,
@@ -78,12 +75,25 @@ class EventPaymentsService(BaseService):
                 },
             )
             await self.update_payment_status(payment_id, PaymentStatusSchema(status=PaymentStatus.APPROVED))
+            await self.inscriptions_repository.update_status(self.event_id, inscription_id, InscriptionStatusSchema(status=InscriptionStatus.APPROVED))
             return {
                 "payment_id": payment_id,
                 "free": True,
             }
+
+        access_token = None
+        if event.provider_account_id:
+            provider_account = await self.provider_account_repository.get(event.provider_account_id)
+            access_token = provider_account.access_token
+        elif self._settings.ENABLE_ENV_PROVIDER_FALLBACK and self._settings.ACCESS_TOKEN:
+            access_token = self._settings.ACCESS_TOKEN
+            
+        if not access_token:
+            raise HTTPException(status_code=400, detail="El organizador no configuró Mercado Pago para este evento")
+
         if not self._settings.API_BASE_URL:
             raise HTTPException(status_code=500, detail="MERCADOPAGO_API_BASE_URL no configurado en el backend")
+            
         api_base = self._settings.API_BASE_URL.rstrip("/")
         back_urls = {
             "success": f"{api_base}/events/{event.id}/provider/return/success",

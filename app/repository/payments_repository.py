@@ -29,8 +29,11 @@ class PaymentsRepository(Repository):
             PaymentModel.id == payment_id,
         ]
         payment = await self._get_with_conditions(conditions)
-        work_conditions = [WorkModel.id.in_(payment.works)]
-        works = await self._get_many_with_values(work_conditions, WorkModel, 0, 100)
+        if payment.works:
+            work_conditions = [WorkModel.id.in_(payment.works)]
+            works = await self._get_many_with_values(work_conditions, WorkModel, 0, 100)
+        else:
+            works = []
         return PaymentResponseSchema(
             id=payment.id,
             event_id=payment.event_id,
@@ -78,8 +81,11 @@ class PaymentsRepository(Repository):
         res = await self._get_many_with_conditions(conditions, offset, limit)
         payments = []
         for row in res:
-            work_conditions = [WorkModel.id.in_(row.works)]
-            works = await self._get_many_with_values(work_conditions, WorkModel, 0, 100)
+            if row.works:
+                work_conditions = [WorkModel.id.in_(row.works)]
+                works = await self._get_many_with_values(work_conditions, WorkModel, 0, 100)
+            else:
+                works = []
             payments.append(
                 PaymentResponseSchema(
                     id=row.id,
