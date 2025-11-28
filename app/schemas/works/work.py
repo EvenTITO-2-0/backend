@@ -43,6 +43,7 @@ class WorkWithState(CreateWorkSchema, WorkStateSchema, WorkUpdateAdministrationS
 class CompleteWork(WorkWithState):
     author_id: UID
 
+
 class WorkWithSchedule(WorkWithState):
     room_name: str | None = None
     start_date: datetime | None = None

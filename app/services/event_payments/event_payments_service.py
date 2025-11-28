@@ -75,14 +75,16 @@ class EventPaymentsService(BaseService):
                 },
             )
             await self.update_payment_status(payment_id, PaymentStatusSchema(status=PaymentStatus.APPROVED))
-            await self.inscriptions_repository.update_status(self.event_id, inscription_id, InscriptionStatusSchema(status=InscriptionStatus.APPROVED))
+            await self.inscriptions_repository.update_status(
+                self.event_id, inscription_id, InscriptionStatusSchema(status=InscriptionStatus.APPROVED)
+            )
             logger.info(
                 "Pago gratuito auto-aprobado",
                 extra={
                     "payment_id": str(payment_id),
                     "inscription_id": str(inscription_id),
-                    "event_id": str(self.event_id)
-                }
+                    "event_id": str(self.event_id),
+                },
             )
             return {
                 "payment_id": payment_id,

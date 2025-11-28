@@ -69,8 +69,7 @@ class EventInscriptionsService(BaseService):
         event = await self.events_configuration_service.get_configuration()
         pricing = getattr(event, "pricing", None) or []
 
-        if (isinstance(pricing, list) and len(pricing) == 1 and
-            ((pricing[0] or {}).get("value") == 0)):
+        if isinstance(pricing, list) and len(pricing) == 1 and ((pricing[0] or {}).get("value") == 0):
             fare_name = pricing[0].get("name", "Gratuito")
             payment_request = PaymentRequestSchema(fare_name=fare_name, works=[])
             try:
