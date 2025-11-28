@@ -1,3 +1,4 @@
+from logging import getLogger
 from uuid import UUID
 
 from app.database.models.event import EventStatus
@@ -28,6 +29,8 @@ from app.services.events.events_configuration_service import EventsConfiguration
 from app.services.notifications.events_notifications_service import EventsNotificationsService
 from app.services.services import BaseService
 from app.services.storage.event_inscription_storage_service import EventInscriptionStorageService
+
+logger = getLogger(__name__)
 
 
 class EventInscriptionsService(BaseService):
@@ -62,6 +65,24 @@ class EventInscriptionsService(BaseService):
         if saved_inscription.affiliation is not None:
             upload_url = await self.storage_service.get_affiliation_upload_url(self.user_id, saved_inscription.id)
             response.upload_url = upload_url
+
+        event = await self.events_configuration_service.get_configuration()
+        pricing = getattr(event, "pricing", None) or []
+
+        if isinstance(pricing, list) and len(pricing) == 1 and ((pricing[0] or {}).get("value") == 0):
+            fare_name = pricing[0].get("name", "Gratuito")
+            payment_request = PaymentRequestSchema(fare_name=fare_name, works=[])
+            try:
+                await self.events_payment_service.pay_inscription(saved_inscription.id, payment_request)
+            except Exception as e:
+                logger.exception(
+                    "Error auto-generando pago gratuito",
+                    extra={
+                        "event_id": str(self.event_id),
+                        "inscription_id": str(saved_inscription.id),
+                        "error": str(e),
+                    },
+                )
 
         # Ending we send a notification email
         # TODO: enviar email al inscriptor ?

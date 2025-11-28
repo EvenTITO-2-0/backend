@@ -1,4 +1,3 @@
-import time
 from datetime import datetime
 from uuid import UUID
 
@@ -6,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.database.models import WorkSlotModel, EventRoomSlotModel
+from app.database.models import WorkSlotModel
 from app.database.models.work import WorkModel, WorkStates
 from app.repository.crud_repository import Repository
 from app.schemas.users.utils import UID
@@ -25,10 +24,7 @@ class WorksRepository(Repository):
 
     async def get_work(self, event_id: UUID, work_id: UUID) -> CompleteWork:
         conditions = [WorkModel.event_id == event_id, WorkModel.id == work_id]
-        start_time = time.time()
         work = await self._get_with_conditions(conditions)
-        elapsed_time = time.time() - start_time
-        print("El tiempo transcurrido es", elapsed_time)
         return work
 
     async def get_all_works_with_talk_not_null(self, event_id: UUID, offset: int, limit: int) -> list[WorkModel]:
