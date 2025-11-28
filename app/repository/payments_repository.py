@@ -101,9 +101,9 @@ class PaymentsRepository(Repository):
             .limit(limit)
         )
         res = await self.session.execute(stmt)
-        res = res.scalars().all()
+        rows = res.scalars().all()
         payments = []
-        for row in res:
+        for row in rows:
             if row.works:
                 work_conditions = [WorkModel.id.in_(row.works)]
                 works = await self._get_many_with_values(work_conditions, WorkModel, 0, 100)
