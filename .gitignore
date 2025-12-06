@@ -174,3 +174,10 @@ pyvenv.cfg
 
 #bin
 /bin
+node_modules/
+
+package-lock.json
+
+*.gz
+
+docker-compose-dev.yaml

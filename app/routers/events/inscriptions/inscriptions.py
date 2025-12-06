@@ -136,6 +136,25 @@ async def pay_inscription(
 
 
 @inscriptions_events_router.get(
+    path="/{inscription_id}/payments/{payment_id}/checkout-url",
+    status_code=200,
+    response_model=PaymentCheckoutSchema,
+    dependencies=[Depends(verify_is_registered)],
+)
+async def get_payment_checkout_url(
+    inscription_id: UUID,
+    payment_id: UUID,
+    inscriptions_service: EventInscriptionsServiceDep,
+) -> PaymentCheckoutSchema:
+    payment_data = await inscriptions_service.recover_payment_checkout_url(inscription_id, payment_id)
+    return PaymentCheckoutSchema(
+        payment_id=payment_data.get("payment_id"),
+        checkout_url=payment_data.get("checkout_url"),
+        preference_id=payment_data.get("preference_id"),
+    )
+
+
+@inscriptions_events_router.get(
     path="/{inscription_id}/payments",
     status_code=200,
     response_model=List[PaymentResponseSchema],

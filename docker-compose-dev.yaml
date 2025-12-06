@@ -57,19 +57,6 @@ services:
     working_dir: /usr/src/app
     networks:
       - eventito-dev-network
-  client:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-    image: client:dev
-    command: sh -c "npm install && npm run dev -- --host"
-    volumes:
-      - ../frontend:/app
-      - /app/node_modules
-    ports:
-      - "5173:5173"
-    networks:
-      - eventito-dev-network
 networks:
   eventito-dev-network:
     name: eventito-dev-network

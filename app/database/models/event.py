@@ -5,6 +5,7 @@ from sqlalchemy import ARRAY, JSON, UUID, Column, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.models.base import Base
+from app.database.models.event_room_slot import EventRoomSlotModel
 from app.database.models.utils import ModelTemplate, UIDType
 
 
@@ -48,3 +49,7 @@ class EventModel(ModelTemplate, Base):
     creator = relationship("UserModel", back_populates="events", lazy=False)
     provider_account_id = Column(UUID(as_uuid=True), ForeignKey("provider_accounts.id"), nullable=True)
     payment_provider = relationship("ProviderAccountModel", back_populates="events")
+
+    event_slots: Mapped[List["EventRoomSlotModel"]] = relationship(
+        "EventRoomSlotModel", back_populates="event", cascade="all, delete-orphan", lazy="selectin"
+    )

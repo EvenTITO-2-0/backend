@@ -49,26 +49,23 @@ class EventPaymentsService(BaseService):
     async def pay_inscription(self, inscription_id: UUID, payment_request: PaymentRequestSchema) -> dict:
         payment_id = await self.payments_repository.do_new_payment(self.event_id, inscription_id, payment_request)
         event = await self.events_repository.get(self.event_id)
-        access_token = None
-        if event.provider_account_id:
-            provider_account = await self.provider_account_repository.get(event.provider_account_id)
-            access_token = provider_account.access_token
-        elif self._settings.ENABLE_ENV_PROVIDER_FALLBACK and self._settings.ACCESS_TOKEN:
-            access_token = self._settings.ACCESS_TOKEN
-        if not access_token:
-            raise HTTPException(status_code=400, detail="El organizador no configuró Mercado Pago para este evento")
+
         if not getattr(event, "pricing", None):
             raise HTTPException(status_code=400, detail="El evento no tiene tarifas configuradas")
+
         fare = next((f for f in event.pricing if f.get("name") == payment_request.fare_name), None)
         if fare is None:
             raise HTTPException(status_code=400, detail=f"Tarifa '{payment_request.fare_name}' no encontrada")
+
         try:
             raw_value = fare.get("value", 0)
             amount = float(raw_value) if not isinstance(raw_value, (int, float)) else float(raw_value)
         except Exception as err:
             raise HTTPException(status_code=400, detail="Valor de tarifa inválido") from err
+
         if amount < 0:
             raise HTTPException(status_code=400, detail="El monto de la tarifa no puede ser negativo")
+
         if amount == 0:
             await self.payments_repository.update_provider_fields(
                 payment_id,
@@ -78,12 +75,35 @@ class EventPaymentsService(BaseService):
                 },
             )
             await self.update_payment_status(payment_id, PaymentStatusSchema(status=PaymentStatus.APPROVED))
+            await self.inscriptions_repository.update_status(
+                self.event_id, inscription_id, InscriptionStatusSchema(status=InscriptionStatus.APPROVED)
+            )
+            logger.info(
+                "Pago gratuito auto-aprobado",
+                extra={
+                    "payment_id": str(payment_id),
+                    "inscription_id": str(inscription_id),
+                    "event_id": str(self.event_id),
+                },
+            )
             return {
                 "payment_id": payment_id,
                 "free": True,
             }
+
+        access_token = None
+        if event.provider_account_id:
+            provider_account = await self.provider_account_repository.get(event.provider_account_id)
+            access_token = provider_account.access_token
+        elif self._settings.ENABLE_ENV_PROVIDER_FALLBACK and self._settings.ACCESS_TOKEN:
+            access_token = self._settings.ACCESS_TOKEN
+
+        if not access_token:
+            raise HTTPException(status_code=400, detail="El organizador no configuró Mercado Pago para este evento")
+
         if not self._settings.API_BASE_URL:
             raise HTTPException(status_code=500, detail="MERCADOPAGO_API_BASE_URL no configurado en el backend")
+
         api_base = self._settings.API_BASE_URL.rstrip("/")
         back_urls = {
             "success": f"{api_base}/events/{event.id}/provider/return/success",
@@ -323,6 +343,51 @@ class EventPaymentsService(BaseService):
             },
         )
 
+    async def recover_checkout_url(self, inscription_id: UUID, payment_id: UUID) -> dict:
+        payment_row = await self.payments_repository.get_payment_row(self.event_id, payment_id)
+        if not payment_row:
+            raise PaymentNotFound(self.event_id, payment_id)
+
+        if payment_row.inscription_id != inscription_id:
+            raise PaymentNotFound(self.event_id, payment_id)
+
+        # Allow recovery for PENDING_APPROVAL
+        if payment_row.status != PaymentStatus.PENDING_APPROVAL:
+            raise HTTPException(status_code=400, detail="El pago no está en estado pendiente")
+
+        preference_id = payment_row.provider_preference_id
+        if not preference_id:
+            raise HTTPException(status_code=400, detail="El pago no tiene una preferencia asociada")
+
+        event = await self.events_repository.get(self.event_id)
+        access_token = None
+        if event.provider_account_id:
+            provider_account = await self.provider_account_repository.get(event.provider_account_id)
+            access_token = provider_account.access_token
+        elif self._settings.ENABLE_ENV_PROVIDER_FALLBACK and self._settings.ACCESS_TOKEN:
+            access_token = self._settings.ACCESS_TOKEN
+
+        if not access_token:
+            raise HTTPException(status_code=400, detail="No se puede conectar con Mercado Pago")
+
+        mp = SDK(access_token)
+        try:
+            pref_response = mp.preference().get(preference_id)
+            pref_data = pref_response.get("response", {})
+            init_point = pref_data.get("init_point") or pref_data.get("sandbox_init_point")
+
+            if not init_point:
+                raise HTTPException(status_code=502, detail="Mercado Pago no devolvió URL de checkout")
+
+            return {
+                "payment_id": payment_id,
+                "checkout_url": init_point,
+                "preference_id": preference_id,
+            }
+        except Exception as e:
+            logger.exception("Error recuperando preferencia MP", extra={"payment_id": str(payment_id)})
+            raise HTTPException(status_code=502, detail="Error consultando Mercado Pago") from e
+
     async def get_inscription_payment(self, inscription_id: UUID, payment_id: UUID) -> PaymentResponseSchema:
         return await self.payments_repository.get_payment(self.event_id, inscription_id, payment_id)
 
@@ -332,6 +397,10 @@ class EventPaymentsService(BaseService):
     async def get_inscription_payments(
         self, inscription_id: UUID, offset: int, limit: int
     ) -> list[PaymentResponseSchema]:
+        expiration_minutes = self._settings.CHECKOUT_EXPIRES_MINUTES
+        # creation_date in DB is naive UTC, so we use naive UTC here
+        cutoff_date = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=expiration_minutes)
+        await self.payments_repository.expire_payments(self.event_id, inscription_id, cutoff_date)
         return await self.payments_repository.get_payments_for_inscription(self.event_id, inscription_id, offset, limit)
 
     async def update_payment_status(self, payment_id: UUID, new_status: PaymentStatusSchema) -> None:

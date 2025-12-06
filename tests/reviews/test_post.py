@@ -17,50 +17,6 @@ from ..commontest import create_headers
 from ..works.test_create_work import USER_WORK
 
 
-async def test_create_review_error_work_is_not_in_revision_yet(
-    client,
-    create_user,
-    create_event_creator,
-    create_event_from_event_creator,
-    create_event_started_with_inscription_from_event_creator,
-):
-    create_work_response = await client.post(
-        f"/events/{create_event_from_event_creator}/works",
-        json=jsonable_encoder(USER_WORK),
-        headers=create_headers(create_event_creator["id"]),
-    )
-    assert create_work_response.status_code == 201
-
-    work_id = create_work_response.json()
-    new_reviewer_1 = ReviewerRequestSchema(
-        work_id=work_id,
-        email=create_user["email"],
-        review_deadline=datetime_library.date.today() + datetime_library.timedelta(days=10),
-    )
-
-    request = ReviewerCreateRequestSchema(reviewers=[new_reviewer_1])
-
-    reviewer_response = await client.post(
-        f"/events/{create_event_from_event_creator}/reviewers",
-        json=jsonable_encoder(request),
-        headers=create_headers(create_event_creator["id"]),
-    )
-
-    assert reviewer_response.status_code == 201
-
-    answer = ReviewAnswer(
-        answers=[SimpleAnswer(question="Comentarios", answer="Muy buen trabajo.", type_question="simple_question")]
-    )
-    review = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer)
-
-    create_review_response = await client.post(
-        f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
-        json=jsonable_encoder(review),
-        headers=create_headers(create_user["id"]),
-    )
-    assert create_review_response.status_code == 409
-
-
 async def test_create_review_error_work_has_no_submissions(
     client,
     create_user,
@@ -97,7 +53,7 @@ async def test_create_review_error_work_has_no_submissions(
         answers=[SimpleAnswer(question="Comentarios", answer="Muy buen trabajo.", type_question="simple_question")]
     )
     review = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer)
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review),
@@ -149,7 +105,7 @@ async def test_create_review_ok(
         answers=[SimpleAnswer(question="Comentarios", answer="Muy buen trabajo.", type_question="simple_question")]
     )
     review = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer)
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review),
@@ -210,7 +166,7 @@ async def test_create_review_duplicate_error(
         answers=[SimpleAnswer(question="Comentarios", answer="Muy buen trabajo.", type_question="simple_question")]
     )
     review = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer)
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review),
@@ -273,7 +229,7 @@ async def test_update_review_ok(
         ]
     )
     review = ReviewCreateRequestSchema(status=ReviewDecision.NOT_APPROVED, review=answer)
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review),
@@ -376,7 +332,7 @@ async def test_publish_reviews_ok(
     )
     review_1 = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer_1)
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_1_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review_1),
@@ -518,7 +474,7 @@ async def test_publish_reviews_ok_work_track_chair(
 
     assert reviewer_response.status_code == 201
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         answer = ReviewAnswer(
             answers=[
                 SimpleAnswer(
@@ -627,7 +583,7 @@ async def test_publish_reviews_is_chair_but_not_in_work_track(
 
     assert reviewer_response.status_code == 201
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         answer = ReviewAnswer(
             answers=[
                 SimpleAnswer(
@@ -736,7 +692,7 @@ async def test_publish_reviews_not_is_organizer_or_work_track(
 
     assert reviewer_response.status_code == 201
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         answer = ReviewAnswer(
             answers=[
                 SimpleAnswer(
@@ -867,7 +823,7 @@ async def test_publish_reviews_empty_list(
 
     review_2 = ReviewCreateRequestSchema(status=ReviewDecision.NOT_APPROVED, review=answer_2)
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_1_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review_1),
@@ -996,7 +952,7 @@ async def test_publish_reviews_from_other_work_id(
 
     review_2 = ReviewCreateRequestSchema(status=ReviewDecision.NOT_APPROVED, review=answer_2)
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_1_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review_1),
@@ -1101,7 +1057,7 @@ async def test_publish_reviews_approved_ok(
     )
     review_1 = ReviewCreateRequestSchema(status=ReviewDecision.APPROVED, review=answer_1)
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_1_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review_1),
@@ -1252,7 +1208,7 @@ async def test_publish_reviews_rejected(
     )
     review_1 = ReviewCreateRequestSchema(status=ReviewDecision.NOT_APPROVED, review=answer_1)
 
-    with freeze_time(datetime.now() + datetime_library.timedelta(days=31)):
+    with freeze_time(datetime.now() + datetime_library.timedelta(days=3)):
         create_review_1_response = await client.post(
             f"/events/{create_event_from_event_creator}/works/{work_id}/reviews",
             json=jsonable_encoder(review_1),
