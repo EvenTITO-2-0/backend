@@ -29,15 +29,14 @@ class SearchState:
     current_cost: float = 0.0
     slot_track_map: Dict[int, str] = field(default_factory=dict)
     track_work_counts_remaining: Dict[str, int] = field(default_factory=dict)
-    track_time_usage: Dict[str, List[Tuple[date, date]]] = field(default_factory=dict)
+    track_time_usage: Dict[str, List[Tuple[datetime, datetime]]] = field(default_factory=dict)
     days_used: Set[date] = field(default_factory=set)
     room_track_map: Dict[str, Set[str]] = field(default_factory=dict)
 
 
 def _has_time_conflict(state: SearchState, track_name: str, slot) -> bool:
-    # Use .date() to compare dates, not datetimes
-    slot_start = cast(datetime, slot.start).date()
-    slot_end = cast(datetime, slot.end).date()
+    slot_start = cast(datetime, slot.start)
+    slot_end = cast(datetime, slot.end)
 
     for existing_start, existing_end in state.track_time_usage.get(track_name, []):
         if slot_start < existing_end and slot_end > existing_start:
@@ -53,7 +52,6 @@ class ConfigurableBBScheduler:
         self.time_delta = timedelta(minutes=time_per_work)
         self.time_per_work = time_per_work
 
-        # FIX 1: Map keys are UUIDs, not ints
         all_works_map: Dict[UUID, WorkModel] = {cast(UUID, w.id): w for w in works}
 
         self.slot_pre_assigned_track: Dict[int, str] = {}
@@ -64,7 +62,6 @@ class ConfigurableBBScheduler:
         # Group works by track
         all_works_by_track: Dict[str, List[WorkModel]] = {}
         for w in works:
-            # FIX 2: Cast Column[str] to str
             track_name = cast(str, w.track)
             all_works_by_track.setdefault(track_name, []).append(w)
 
@@ -92,7 +89,6 @@ class ConfigurableBBScheduler:
 
         self.all_slots: List[EventRoomSlotModel] = sorted(slots, key=lambda s: (s.start, s.room_name))
 
-        # FIX 3: Cast Column[int] to int for Slot IDs
         self.slot_map: Dict[int, EventRoomSlotModel] = {cast(int, s.id): s for s in self.all_slots}
         self.total_slots = len(self.all_slots)
 
@@ -143,9 +139,8 @@ class ConfigurableBBScheduler:
             track_counts[track_name] -= num_existing
             state.slot_track_map[slot_id] = track_name
 
-            # FIX 4: Use dates instead of datetime columns
-            start_date = cast(datetime, slot.start).date()
-            end_date = cast(datetime, slot.end).date()
+            start_date = cast(datetime, slot.start)
+            end_date = cast(datetime, slot.end)
             state.track_time_usage.setdefault(track_name, []).append((start_date, end_date))
 
             self._apply_cost_for_assignment(state, slot, track_name)
@@ -206,7 +201,7 @@ class ConfigurableBBScheduler:
             return
 
         slot_to_try = self.all_slots[state.slot_index]
-        slot_id = cast(int, slot_to_try.id)
+        slot_id = slot_to_try.id
         pre_assigned_track = self.slot_pre_assigned_track.get(slot_id)
 
         if pre_assigned_track:
@@ -282,8 +277,8 @@ class ConfigurableBBScheduler:
         state.track_work_counts_remaining[track_name] -= works_assigned
 
         # Use simple date objects for storage
-        start_date = cast(datetime, slot.start).date()
-        end_date = cast(datetime, slot.end).date()
+        start_date = cast(datetime, slot.start)
+        end_date = cast(datetime, slot.end)
         state.track_time_usage.setdefault(track_name, []).append((start_date, end_date))
 
         if is_new_day:
