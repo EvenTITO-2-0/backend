@@ -9,7 +9,7 @@ class SlotWorkInfoSchema(BaseModel):
     id: UUID
     title: str
     track: str
-    work_number: int
+    work_number: int | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -30,7 +30,6 @@ class SlotWithWorksSchema(BaseModel):
 
     work_links: List[WorkSlotLinkSchema] = Field(default=[], exclude=True)
 
-    @property
     @computed_field
     def works(self) -> List[SlotWorkInfoSchema]:
         if not self.work_links:
