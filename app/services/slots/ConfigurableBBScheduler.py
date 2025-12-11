@@ -337,6 +337,11 @@ class ConfigurableBBScheduler:
         if day not in state.days_used:
             cost += self.penalties.per_distinct_day
 
+        # Penalty for splitting track across days
+        existing_days = {s.date() for s, _ in state.track_time_usage.get(track_name, [])}
+        if existing_days and day not in existing_days:
+            cost += self.penalties.per_distinct_day * 4
+
         room_name = cast(str, slot.room_name)
         tracks_in_room = state.room_track_map.get(room_name, set())
         if track_name not in tracks_in_room and tracks_in_room:
@@ -434,10 +439,16 @@ class ConfigurableBBScheduler:
         is_new_track = track_name not in tracks_in_room
         is_mix = is_new_track and len(tracks_in_room) > 0
 
-        if is_new_day:
-            cost_increase += self.penalties.per_distinct_day
+        #if is_new_day:
+        #    cost_increase += self.penalties.per_distinct_day
         if is_mix:
             cost_increase += self.penalties.per_room_track_mix
+
+        # Penalty for splitting track across days
+        existing_days = {s.date() for s, _ in state.track_time_usage.get(track_name, [])}
+        if existing_days and day not in existing_days:
+            cost_increase += self.penalties.per_distinct_day * 4
+            # logger.info(f"Existing day cost increase: {self.penalties.per_distinct_day * 4}")
 
         # Apply State Changes
         state.current_cost += cost_increase
